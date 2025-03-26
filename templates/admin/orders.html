@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Order Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_users' %}">
+                            <i class="bi bi-people"></i> User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_produce' %}">
+                            <i class="bi bi-basket"></i> Produce Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'admin_orders' %}">
+                            <i class="bi bi-cart"></i> Order Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_sms' %}">
+                            <i class="bi bi-envelope"></i> SMS Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_weather_alerts' %}">
+                            <i class="bi bi-cloud"></i> Weather Alerts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_price_updates' %}">
+                            <i class="bi bi-graph-up"></i> Price Updates
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_reports' %}">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_settings' %}">
+                            <i class="bi bi-gear"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Order Management</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="orderActionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear"></i> Actions
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="orderActionDropdown">
+                            <li><a class="dropdown-item" href="{% url 'admin_bulk_update_orders' %}">Bulk Update Status</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin_send_order_notifications' %}">Send Notifications</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'admin_order_settings' %}">Order Settings</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" action="{% url 'admin_orders' %}" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Processing</option>
+                                <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_range" class="form-label">Date Range</label>
+                            <select name="date_range" id="date_range" class="form-select">
+                                <option value="">All Time</option>
+                                <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>Today</option>
+                                <option value="yesterday" {% if request.GET.date_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                                <option value="this_week" {% if request.GET.date_range == 'this_week' %}selected{% endif %}>This Week</option>
+                                <option value="last_week" {% if request.GET.date_range == 'last_week' %}selected{% endif %}>Last Week</option>
+                                <option value="this_month" {% if request.GET.date_range == 'this_month' %}selected{% endif %}>This Month</option>
+                                <option value="last_month" {% if request.GET.date_range == 'last_month' %}selected{% endif %}>Last Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" placeholder="Order ID, buyer, or farmer" value="{{ request.GET.search|default:'' }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllOrders">
+                                        </div>
+                                    </th>
+                                    <th>Order ID</th>
+                                    <th>Buyer</th>
+                                    <th>Farmer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input order-checkbox" type="checkbox" value="{{ order.id }}">
+                                            </div>
+                                        </td>
+                                        <td>{{ order.order_id }}</td>
+                                        <td>{{ order.buyer.user.get_full_name }}</td>
+                                        <td>{{ order.produce.farmer.user.get_full_name }}</td>
+                                        <td>{{ order.quantity }} {{ order.produce.unit }} of {{ order.produce.title }}</td>
+                                        <td>{{ order.total_price }} TND</td>
+                                        <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge {% if order.status == 'pending' %}bg-warning text-dark{% elif order.status == 'confirmed' %}bg-info{% elif order.status == 'processing' %}bg-primary{% elif order.status == 'shipped' %}bg-info{% elif order.status == 'delivered' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'admin_view_order' order.id %}" class="btn btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-gear"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><h6 class="dropdown-header">Update Status</h6></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_update_order_status' order.id %}?status=confirmed">Confirm</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_update_order_status' order.id %}?status=processing">Process</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_update_order_status' order.id %}?status=shipped">Ship</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_update_order_status' order.id %}?status=delivered">Deliver</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_update_order_status' order.id %}?status=cancelled">Cancel</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item" href="{% url 'admin_send_order_notification' order.id %}">Send Notification</a></li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center">No orders found matching your criteria.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Bulk Actions -->
+                    <div class="mt-3 mb-4">
+                        <form id="bulkActionForm" method="post" action="{% url 'admin_bulk_update_orders' %}" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-auto">
+                                <select name="bulk_action" id="bulkAction" class="form-select">
+                                    <option value="">Bulk Actions</option>
+                                    <option value="confirm">Confirm Selected</option>
+                                    <option value="process">Process Selected</option>
+                                    <option value="ship">Ship Selected</option>
+                                    <option value="deliver">Deliver Selected</option>
+                                    <option value="cancel">Cancel Selected</option>
+                                    <option value="notify">Notify Selected</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary" id="applyBulkAction" disabled>Apply</button>
+                            </div>
+                            <input type="hidden" name="selected_orders" id="selectedOrders" value="">
+                        </form>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if orders.has_other_pages %}
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if orders.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in orders.paginator.page_range %}
+                                    {% if orders.number == i %}
+                                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                    {% elif i > orders.number|add:'-3' and i < orders.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if orders.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ orders.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Order Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">Order Status Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="orderStatusChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">Daily Order Volume (Last 7 Days)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="orderVolumeChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Order Status Chart
+        const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+        const orderStatusChart = new Chart(orderStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+                datasets: [{
+                    data: [15, 12, 8, 5, 25, 3],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(23, 162, 184, 0.8)',
+                        'rgba(0, 123, 255, 0.8)',
+                        'rgba(108, 117, 125, 0.8)',
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(0, 123, 255, 1)',
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+        
+        // Order Volume Chart
+        const orderVolumeCtx = document.getElementById('orderVolumeChart').getContext('2d');
+        const orderVolumeChart = new Chart(orderVolumeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mar 20', 'Mar 21', 'Mar 22', 'Mar 23', 'Mar 24', 'Mar 25', 'Mar 26'],
+                datasets: [{
+                    label: 'Orders',
+                    data: [12, 19, 15, 8, 22, 14, 10],
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Select All Orders
+        const selectAllCheckbox = document.getElementById('selectAllOrders');
+        const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+        const bulkActionButton = document.getElementById('applyBulkAction');
+        const selectedOrdersInput = document.getElementById('selectedOrders');
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                
+                orderCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                
+                updateBulkActionButton();
+                updateSelectedOrdersInput();
+            });
+        }
+        
+        if (orderCheckboxes.length > 0) {
+            orderCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateBulkActionButton();
+                    updateSelectedOrdersInput();
+                    
+                    // Update "select all" checkbox
+                    const allChecked = Array.from(orderCheckboxes).every(cb => cb.checked);
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = allChecked;
+                    }
+                });
+            });
+        }
+        
+        function updateBulkActionButton() {
+            const anyChecked = Array.from(orderCheckboxes).some(cb => cb.checked);
+            if (bulkActionButton) {
+                bulkActionButton.disabled = !anyChecked;
+            }
+        }
+        
+        function updateSelectedOrdersInput() {
+            const selectedIds = Array.from(orderCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+                
+            if (selectedOrdersInput) {
+                selectedOrdersInput.value = selectedIds.join(',');
+            }
+        }
+        
+        // Form submission validation
+        const bulkActionForm = document.getElementById('bulkActionForm');
+        const bulkActionSelect = document.getElementById('bulkAction');
+        
+        if (bulkActionForm) {
+            bulkActionForm.addEventListener('submit', function(e) {
+                if (!bulkActionSelect.value) {
+                    e.preventDefault();
+                    alert('Please select an action to perform.');
+                    return false;
+                }
+                
+                if (!selectedOrdersInput.value) {
+                    e.preventDefault();
+                    alert('Please select at least one order.');
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+    });
+</script>
+{% endblock %}

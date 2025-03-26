@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - {{ produce.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'produce_list' %}">Produce</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ produce.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Produce Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h1 class="card-title mb-3">{{ produce.title }}</h1>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-success">{{ produce.category.name }}</span>
+                        <span class="location-badge">
+                            <i class="bi bi-geo-alt"></i> {{ produce.location }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2 class="produce-price">{{ produce.price_per_unit }} TND per {{ produce.unit }}</h2>
+                        <p class="text-muted">Total available: {{ produce.quantity }} {{ produce.unit }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p>{{ produce.description }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Listing Details</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Listed by</span>
+                                <a href="{% url 'farmer_detail' produce.farmer.id %}">{{ produce.farmer.user.get_full_name }}</a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Farmer Rating</span>
+                                <span class="star-rating">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= produce.farmer.rating|floatformat:"0" %}
+                                            ★
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    {% endfor %}
+                                    ({{ produce.farmer.rating }})
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Listed on</span>
+                                <span>{{ produce.created_at|date:"F j, Y" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Last updated</span>
+                                <span>{{ produce.updated_at|date:"F j, Y" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Form -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Place an Order</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated and user.buyer_profile %}
+                        <form method="post" action="{% url 'create_order' produce.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity ({{ produce.unit }})</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="0.01" max="{{ produce.quantity }}" step="0.01" required>
+                                <div class="form-text">Maximum available: {{ produce.quantity }} {{ produce.unit }}</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="delivery_location" class="form-label">Delivery Location</label>
+                                <input type="text" class="form-control" id="delivery_location" name="delivery_location" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="delivery_notes" class="form-label">Delivery Notes (Optional)</label>
+                                <textarea class="form-control" id="delivery_notes" name="delivery_notes" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6>Order Summary</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Price per {{ produce.unit }}:</span>
+                                            <span>{{ produce.price_per_unit }} TND</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Platform fee (2%):</span>
+                                            <span>Calculated at checkout</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between fw-bold">
+                                            <span>Total:</span>
+                                            <span id="total-price">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-cart-check"></i> Place Order
+                                </button>
+                            </div>
+                        </form>
+                    {% elif user.is_authenticated and user.farmer_profile %}
+                        <div class="alert alert-info">
+                            <p>You are logged in as a farmer. To place orders, please register a buyer account.</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p>Please <a href="{% url 'login' %}">log in</a> or <a href="{% url 'register' %}">register</a> as a buyer to place an order.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Farmer Contact Card -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Farmer Information</h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ produce.farmer.user.get_full_name }}</h5>
+                    <p><i class="bi bi-geo-alt"></i> {{ produce.farmer.location }}</p>
+                    <p><i class="bi bi-telephone"></i> Contact via platform messaging</p>
+                    <div class="d-grid">
+                        <a href="{% url 'farmer_detail' produce.farmer.id %}" class="btn btn-outline-success">
+                            <i class="bi bi-person"></i> View Farmer Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_items %}
+        <div class="mt-5">
+            <h3 class="mb-4">Related Products</h3>
+            <div class="row">
+                {% for item in related_items %}
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ item.title }}</h5>
+                                <p class="card-text">{{ item.description|truncatechars:80 }}</p>
+                                <p class="produce-price">{{ item.price_per_unit }} TND/{{ item.unit }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'produce_detail' item.id %}" class="btn btn-sm btn-primary w-100">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate total price based on quantity
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('quantity');
+        const totalPriceElement = document.getElementById('total-price');
+        const pricePerUnit = {{ produce.price_per_unit }};
+        
+        if (quantityInput && totalPriceElement) {
+            quantityInput.addEventListener('input', function() {
+                const quantity = parseFloat(this.value) || 0;
+                const subtotal = quantity * pricePerUnit;
+                const fee = subtotal * 0.02; // 2% platform fee
+                const total = subtotal + fee;
+                
+                totalPriceElement.textContent = total.toFixed(2) + ' TND';
+            });
+        }
+    });
+</script>
+{% endblock %}

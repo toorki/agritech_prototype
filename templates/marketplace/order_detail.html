@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Order Details{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'order_list' %}">Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Order #{{ order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Order #{{ order.id }}</h2>
+            <span class="badge badge-{{ order.status }} fs-5">{{ order.get_status_display }}</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Order Information</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Order Date:</span>
+                            <span>{{ order.created_at|date:"F j, Y, g:i a" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Last Updated:</span>
+                            <span>{{ order.updated_at|date:"F j, Y, g:i a" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Status:</span>
+                            <span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Delivery Location:</span>
+                            <span>{{ order.delivery_location }}</span>
+                        </li>
+                        {% if order.delivery_notes %}
+                            <li class="list-group-item">
+                                <span>Delivery Notes:</span>
+                                <p class="mb-0 mt-1">{{ order.delivery_notes }}</p>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>
+                        {% if user.farmer_profile %}
+                            Buyer Information
+                        {% else %}
+                            Seller Information
+                        {% endif %}
+                    </h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        {% if user.farmer_profile %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Buyer:</span>
+                                <span>{{ order.buyer.user.get_full_name }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Phone:</span>
+                                <span>{{ order.buyer.phone_number }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Location:</span>
+                                <span>{{ order.buyer.location }}</span>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Seller:</span>
+                                <span>{{ order.produce.farmer.user.get_full_name }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Rating:</span>
+                                <span class="star-rating">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= order.produce.farmer.rating|floatformat:"0" %}
+                                            ★
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    {% endfor %}
+                                    ({{ order.produce.farmer.rating }})
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Phone:</span>
+                                <span>{{ order.produce.farmer.phone_number }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Location:</span>
+                                <span>{{ order.produce.farmer.location }}</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <h5>Order Details</h5>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="{% url 'produce_detail' order.produce.id %}">{{ order.produce.title }}</a>
+                                <div class="small text-muted">{{ order.produce.category.name }}</div>
+                            </td>
+                            <td>{{ order.unit_price }} TND/{{ order.produce.unit }}</td>
+                            <td>{{ order.quantity }} {{ order.produce.unit }}</td>
+                            <td>{{ order.quantity|multiply:order.unit_price }} TND</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end">Subtotal:</td>
+                            <td>{{ order.quantity|multiply:order.unit_price }} TND</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end">Platform Fee (2%):</td>
+                            <td>{{ order.platform_fee }} TND</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                            <td class="fw-bold">{{ order.total_amount }} TND</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'order_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Orders
+                </a>
+                
+                <div>
+                    {% if user.farmer_profile and order.status == 'pending' %}
+                        <a href="{% url 'update_order_status' order.id 'confirmed' %}" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Confirm Order
+                        </a>
+                        <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Cancel Order
+                        </a>
+                    {% elif user.farmer_profile and order.status == 'confirmed' %}
+                        <a href="{% url 'update_order_status' order.id 'delivered' %}" class="btn btn-primary">
+                            <i class="bi bi-truck"></i> Mark as Delivered
+                        </a>
+                    {% elif user.buyer_profile and order.status == 'pending' %}
+                        <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Cancel Order
+                        </a>
+                    {% elif user.buyer_profile and order.status == 'delivered' %}
+                        <a href="{% url 'update_order_status' order.id 'completed' %}" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Complete Order
+                        </a>
+                        {% if not order.rating %}
+                            <a href="{% url 'create_rating' order.id %}" class="btn btn-warning">
+                                <i class="bi bi-star"></i> Rate Farmer
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Rating Section -->
+            {% if order.rating %}
+                <div class="mt-4">
+                    <h5>Your Rating</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="star-rating">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= order.rating.score %}
+                                            ★
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-2">{{ order.rating.score }}/5</span>
+                                </div>
+                                <small class="text-muted">{{ order.rating.created_at|date:"F j, Y" }}</small>
+                            </div>
+                            {% if order.rating.comment %}
+                                <p class="mb-0">{{ order.rating.comment }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

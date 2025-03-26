@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Send SMS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'sms_dashboard' %}">SMS Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Send SMS</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Send SMS Message</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'send_sms' %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_recipient_number" class="form-label">Recipient Phone Number</label>
+                            <input type="tel" class="form-control {% if form.recipient_number.errors %}is-invalid{% endif %}" id="id_recipient_number" name="recipient_number" value="{{ form.recipient_number.value|default:'' }}" required>
+                            {% if form.recipient_number.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.recipient_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Enter the phone number in international format (e.g., +21612345678)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_message_type" class="form-label">Message Type</label>
+                            <select class="form-select {% if form.message_type.errors %}is-invalid{% endif %}" id="id_message_type" name="message_type" required>
+                                <option value="">Select message type</option>
+                                <option value="weather" {% if form.message_type.value == 'weather' %}selected{% endif %}>Weather Alert</option>
+                                <option value="price" {% if form.message_type.value == 'price' %}selected{% endif %}>Price Update</option>
+                                <option value="order" {% if form.message_type.value == 'order' %}selected{% endif %}>Order Notification</option>
+                                <option value="system" {% if form.message_type.value == 'system' %}selected{% endif %}>System Notification</option>
+                                <option value="marketing" {% if form.message_type.value == 'marketing' %}selected{% endif %}>Marketing Message</option>
+                            </select>
+                            {% if form.message_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.message_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_template" class="form-label">Use Template (Optional)</label>
+                            <select class="form-select" id="id_template" name="template">
+                                <option value="">No template (custom message)</option>
+                                {% for template in templates %}
+                                    <option value="{{ template.id }}" data-text="{{ template.template_text }}">
+                                        {{ template.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select a template or write a custom message below</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_message_content" class="form-label">Message Content</label>
+                            <textarea class="form-control {% if form.message_content.errors %}is-invalid{% endif %}" id="id_message_content" name="message_content" rows="5" required>{{ form.message_content.value|default:'' }}</textarea>
+                            {% if form.message_content.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.message_content.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between">
+                                <div class="form-text">Maximum 160 characters for standard SMS</div>
+                                <div class="form-text"><span id="char-count">0</span>/160 characters</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Send Message
+                            </button>
+                            <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageContent = document.getElementById('id_message_content');
+        const charCount = document.getElementById('char-count');
+        const templateSelect = document.getElementById('id_template');
+        
+        // Update character count
+        function updateCharCount() {
+            const count = messageContent.value.length;
+            charCount.textContent = count;
+            
+            if (count > 160) {
+                charCount.classList.add('text-danger');
+            } else {
+                charCount.classList.remove('text-danger');
+            }
+        }
+        
+        // Load template text when template is selected
+        function loadTemplateText() {
+            const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+            if (selectedOption.value) {
+                const templateText = selectedOption.getAttribute('data-text');
+                messageContent.value = templateText;
+                updateCharCount();
+            }
+        }
+        
+        if (messageContent) {
+            messageContent.addEventListener('input', updateCharCount);
+            updateCharCount(); // Initial count
+        }
+        
+        if (templateSelect) {
+            templateSelect.addEventListener('change', loadTemplateText);
+        }
+    });
+</script>
+{% endblock %}

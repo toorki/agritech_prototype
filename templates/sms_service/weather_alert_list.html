@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Weather Alerts{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'sms_dashboard' %}">SMS Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Weather Alerts</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Weather Alerts</h2>
+            {% if user.is_staff %}
+                <a href="{% url 'create_weather_alert' %}" class="btn btn-dark">
+                    <i class="bi bi-plus-circle"></i> Create New Alert
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <div class="mb-4">
+                <form method="get" action="{% url 'weather_alert_list' %}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" placeholder="Enter location" value="{{ request.GET.location|default:'' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="alert_type" class="form-label">Alert Type</label>
+                        <select name="alert_type" id="alert_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="rain" {% if request.GET.alert_type == 'rain' %}selected{% endif %}>Rain</option>
+                            <option value="drought" {% if request.GET.alert_type == 'drought' %}selected{% endif %}>Drought</option>
+                            <option value="frost" {% if request.GET.alert_type == 'frost' %}selected{% endif %}>Frost</option>
+                            <option value="heat" {% if request.GET.alert_type == 'heat' %}selected{% endif %}>Heat Wave</option>
+                            <option value="wind" {% if request.GET.alert_type == 'wind' %}selected{% endif %}>Strong Wind</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Alerts List -->
+            {% if alerts %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Alert Type</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                {% if user.is_staff %}
+                                    <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                                <tr>
+                                    <td>{{ alert.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ alert.location }}</td>
+                                    <td>{{ alert.alert_type|title }}</td>
+                                    <td>
+                                        <span class="badge {% if alert.severity == 'high' %}bg-danger{% elif alert.severity == 'medium' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                            {{ alert.severity|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if alert.is_sent %}
+                                            <span class="badge bg-success">Sent</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Sent</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.is_staff %}
+                                        <td>
+                                            <a href="{% url 'view_weather_alert' alert.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if not alert.is_sent %}
+                                                <a href="{% url 'send_weather_alert' alert.id %}" class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-send"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if alerts.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if alerts.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.alert_type %}&alert_type={{ request.GET.alert_type }}{% endif %}" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ alerts.previous_page_number }}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.alert_type %}&alert_type={{ request.GET.alert_type }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in alerts.paginator.page_range %}
+                                {% if alerts.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > alerts.number|add:'-3' and i < alerts.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.alert_type %}&alert_type={{ request.GET.alert_type }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if alerts.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ alerts.next_page_number }}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.alert_type %}&alert_type={{ request.GET.alert_type }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ alerts.paginator.num_pages }}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.alert_type %}&alert_type={{ request.GET.alert_type }}{% endif %}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">No weather alerts found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Weather Alert Information -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">About Weather Alerts</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-cloud-rain"></i> Rain Alerts
+                            </h5>
+                            <p class="card-text">Receive notifications about upcoming rainfall that may affect your crops. Prepare for heavy rain by securing your produce and planning harvesting accordingly.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-sun"></i> Drought Alerts
+                            </h5>
+                            <p class="card-text">Stay informed about drought conditions that may require additional irrigation. Plan your water usage to ensure your crops remain healthy during dry periods.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-snow"></i> Frost Alerts
+                            </h5>
+                            <p class="card-text">Get warnings about potential frost that could damage sensitive crops. Take protective measures such as covering plants or harvesting early when frost is expected.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-thermometer-high"></i> Heat Wave Alerts
+                            </h5>
+                            <p class="card-text">Receive alerts about extreme heat that may stress your crops. Implement shade structures, adjust irrigation schedules, and take other measures to protect plants during heat waves.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

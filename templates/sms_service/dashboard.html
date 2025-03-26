@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - SMS Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">SMS Services Dashboard</h1>
+    
+    <div class="row">
+        <!-- Sidebar with subscription management -->
+        <div class="col-md-4 mb-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">My Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'subscription_management' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <p class="mb-2">Select the types of SMS alerts you want to receive:</p>
+                            
+                            {% for sub_type, sub_name in subscription_types %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="subscription_types" 
+                                           value="{{ sub_type }}" id="sub_{{ sub_type }}"
+                                           {% for sub in subscriptions %}
+                                               {% if sub.subscription_type == sub_type and sub.is_active %}
+                                                   checked
+                                               {% endif %}
+                                           {% endfor %}>
+                                    <label class="form-check-label" for="sub_{{ sub_type }}">
+                                        {{ sub_name }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Update Subscriptions
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'send_sms' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope"></i> Send SMS Message
+                        </a>
+                        <a href="{% url 'sms_history' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-clock-history"></i> View Message History
+                        </a>
+                        {% if user.farmer_profile %}
+                            <a href="{% url 'template_list' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-file-text"></i> View SMS Templates
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-md-8">
+            <!-- Recent Messages -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Messages</h5>
+                    <a href="{% url 'sms_history' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        <div class="list-group">
+                            {% for message in messages %}
+                                <div class="list-group-item list-group-item-action sms-message {{ message.message_type }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ message.get_message_type_display }}</h6>
+                                        <small class="text-muted">{{ message.sent_at|timesince }} ago</small>
+                                    </div>
+                                    <p class="mb-1">{{ message.message_content }}</p>
+                                    <small class="text-muted">
+                                        Status: <span class="badge {% if message.status == 'sent' %}bg-success{% elif message.status == 'failed' %}bg-danger{% elif message.status == 'simulated' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ message.status|title }}
+                                        </span>
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">You don't have any SMS messages yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SMS Service Information -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">About SMS Services</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-cloud-sun"></i> Weather Alerts
+                                    </h5>
+                                    <p class="card-text">Receive timely alerts about weather conditions that may affect your crops, including rain forecasts, drought warnings, and temperature changes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-graph-up"></i> Price Updates
+                                    </h5>
+                                    <p class="card-text">Stay informed about market price changes for your agricultural products to help you make better selling decisions.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-cart"></i> Order Notifications
+                                    </h5>
+                                    <p class="card-text">Get instant notifications when buyers place orders for your produce or when the status of your orders changes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-megaphone"></i> System Notifications
+                                    </h5>
+                                    <p class="card-text">Receive important system announcements, maintenance updates, and other platform-related information.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

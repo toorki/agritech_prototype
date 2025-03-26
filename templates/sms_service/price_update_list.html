@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Price Updates{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'sms_dashboard' %}">SMS Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Price Updates</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Market Price Updates</h2>
+            {% if user.is_staff %}
+                <a href="{% url 'create_price_update' %}" class="btn btn-light">
+                    <i class="bi bi-plus-circle"></i> Create New Update
+                </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <div class="mb-4">
+                <form method="get" action="{% url 'price_update_list' %}" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="category" class="form-label">Category</label>
+                        <select name="category" id="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="market" class="form-label">Market</label>
+                        <input type="text" class="form-control" id="market" name="market" placeholder="Enter market location" value="{{ request.GET.market|default:'' }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Price Updates List -->
+            {% if price_updates %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Product</th>
+                                <th>Market</th>
+                                <th>Price</th>
+                                <th>Change</th>
+                                <th>Status</th>
+                                {% if user.is_staff %}
+                                    <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for update in price_updates %}
+                                <tr>
+                                    <td>{{ update.created_at|date:"M d, Y" }}</td>
+                                    <td>{{ update.product_name }}</td>
+                                    <td>{{ update.market_location }}</td>
+                                    <td>{{ update.current_price }} TND/{{ update.unit }}</td>
+                                    <td>
+                                        {% if update.price_change > 0 %}
+                                            <span class="text-success">
+                                                <i class="bi bi-arrow-up"></i> {{ update.price_change }} TND
+                                            </span>
+                                        {% elif update.price_change < 0 %}
+                                            <span class="text-danger">
+                                                <i class="bi bi-arrow-down"></i> {{ update.price_change|abs }} TND
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">No change</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if update.is_sent %}
+                                            <span class="badge bg-success">Sent</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Sent</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.is_staff %}
+                                        <td>
+                                            <a href="{% url 'view_price_update' update.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if not update.is_sent %}
+                                                <a href="{% url 'send_price_update' update.id %}" class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-send"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if price_updates.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if price_updates.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.market %}&market={{ request.GET.market }}{% endif %}" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ price_updates.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.market %}&market={{ request.GET.market }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in price_updates.paginator.page_range %}
+                                {% if price_updates.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > price_updates.number|add:'-3' and i < price_updates.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.market %}&market={{ request.GET.market }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if price_updates.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ price_updates.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.market %}&market={{ request.GET.market }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ price_updates.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.market %}&market={{ request.GET.market }}{% endif %}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">No price updates found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Market Price Trends -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Market Price Trends</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Top Price Increases (Last 30 Days)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Current Price</th>
+                                    <th>Change</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trend in price_increases %}
+                                    <tr>
+                                        <td>{{ trend.product_name }}</td>
+                                        <td>{{ trend.current_price }} TND/{{ trend.unit }}</td>
+                                        <td class="text-success">
+                                            <i class="bi bi-arrow-up"></i> {{ trend.price_change }} TND
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No data available</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Top Price Decreases (Last 30 Days)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Current Price</th>
+                                    <th>Change</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trend in price_decreases %}
+                                    <tr>
+                                        <td>{{ trend.product_name }}</td>
+                                        <td>{{ trend.current_price }} TND/{{ trend.unit }}</td>
+                                        <td class="text-danger">
+                                            <i class="bi bi-arrow-down"></i> {{ trend.price_change|abs }} TND
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No data available</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

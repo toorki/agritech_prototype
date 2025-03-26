@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>AgriTech Marketplace</h1>
+    
+    <div class="card">
+        <h2>Product Categories</h2>
+        <div class="categories">
+            {% if categories %}
+                {% for category in categories %}
+                    <div class="category-item">
+                        <h3>{{ category.name }}</h3>
+                        <a href="{% url 'produce_list' %}?category={{ category.id }}" class="btn">Browse Products</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No categories available.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Featured Products</h2>
+        <div class="products">
+            {% if featured_produce %}
+                {% for produce in featured_produce %}
+                    <div class="product-item">
+                        <h3>{{ produce.title }}</h3>
+                        <p>{{ produce.description }}</p>
+                        <p>Price: {{ produce.price_per_unit }} TND per {{ produce.unit }}</p>
+                        <p>Quantity: {{ produce.quantity }} {{ produce.unit }}</p>
+                        <p>Location: {{ produce.location }}</p>
+                        <a href="{% url 'produce_detail' produce.id %}" class="btn">View Details</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No featured products available.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if top_farmers %}
+    <div class="card">
+        <h2>Top Farmers</h2>
+        <div class="farmers">
+            {% for farmer in top_farmers %}
+                <div class="farmer-item">
+                    <h3>{{ farmer.user.get_full_name }}</h3>
+                    <p>Location: {{ farmer.location }}</p>
+                    <p>Rating: {{ farmer.rating }}/5</p>
+                    <a href="{% url 'farmer_detail' farmer.id %}" class="btn">View Profile</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

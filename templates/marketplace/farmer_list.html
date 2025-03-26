@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Farmers List{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Browse Farmers</h1>
+    
+    <div class="row">
+        {% if farmers %}
+            {% for farmer in farmers %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if farmer.profile_image %}
+                            <img src="{{ farmer.profile_image.url }}" class="card-img-top" alt="{{ farmer.user.username }}">
+                        {% else %}
+                            <div class="card-img-top bg-light text-center py-5">
+                                <i class="fas fa-user fa-3x text-secondary"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ farmer.user.get_full_name|default:farmer.user.username }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-map-marker-alt"></i> {{ farmer.location }}
+                            </p>
+                            <p class="card-text">
+                                <i class="fas fa-star text-warning"></i> {{ farmer.rating|floatformat:1 }} ({{ farmer.rating_count }} reviews)
+                            </p>
+                            <p class="card-text">{{ farmer.bio|truncatechars:100 }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'farmer_detail' farmer.id %}" class="btn btn-primary">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No farmers found. Check back later!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

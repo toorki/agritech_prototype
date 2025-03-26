@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Create Template{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'sms_dashboard' %}">SMS Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'template_list' %}">SMS Templates</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create Template</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Create SMS Template</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'create_template' %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Template Name</label>
+                            <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" id="id_name" name="name" value="{{ form.name.value|default:'' }}" required>
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Enter a descriptive name for this template</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_template_type" class="form-label">Template Type</label>
+                            <select class="form-select {% if form.template_type.errors %}is-invalid{% endif %}" id="id_template_type" name="template_type" required>
+                                <option value="">Select template type</option>
+                                <option value="weather" {% if form.template_type.value == 'weather' %}selected{% endif %}>Weather Alert</option>
+                                <option value="price" {% if form.template_type.value == 'price' %}selected{% endif %}>Price Update</option>
+                                <option value="order" {% if form.template_type.value == 'order' %}selected{% endif %}>Order Notification</option>
+                                <option value="system" {% if form.template_type.value == 'system' %}selected{% endif %}>System Notification</option>
+                                <option value="marketing" {% if form.template_type.value == 'marketing' %}selected{% endif %}>Marketing Message</option>
+                            </select>
+                            {% if form.template_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.template_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_template_text" class="form-label">Template Text</label>
+                            <textarea class="form-control {% if form.template_text.errors %}is-invalid{% endif %}" id="id_template_text" name="template_text" rows="5" required>{{ form.template_text.value|default:'' }}</textarea>
+                            {% if form.template_text.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.template_text.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between">
+                                <div class="form-text">You can use placeholders like {farmer_name}, {product}, {price}, etc.</div>
+                                <div class="form-text"><span id="char-count">0</span>/160 characters</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Available Placeholders</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled mb-0">
+                                                <li><code>{farmer_name}</code> - Farmer's name</li>
+                                                <li><code>{product}</code> - Product/crop name</li>
+                                                <li><code>{price}</code> - Price value</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled mb-0">
+                                                <li><code>{location}</code> - Location name</li>
+                                                <li><code>{date}</code> - Current date</li>
+                                                <li><code>{order_id}</code> - Order ID number</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Template
+                            </button>
+                            <a href="{% url 'template_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const templateText = document.getElementById('id_template_text');
+        const charCount = document.getElementById('char-count');
+        
+        // Update character count
+        function updateCharCount() {
+            const count = templateText.value.length;
+            charCount.textContent = count;
+            
+            if (count > 160) {
+                charCount.classList.add('text-danger');
+            } else {
+                charCount.classList.remove('text-danger');
+            }
+        }
+        
+        if (templateText) {
+            templateText.addEventListener('input', updateCharCount);
+            updateCharCount(); // Initial count
+        }
+        
+        // Add placeholder buttons
+        const placeholders = [
+            {code: '{farmer_name}', desc: 'Farmer\'s name'},
+            {code: '{product}', desc: 'Product/crop name'},
+            {code: '{price}', desc: 'Price value'},
+            {code: '{location}', desc: 'Location name'},
+            {code: '{date}', desc: 'Current date'},
+            {code: '{order_id}', desc: 'Order ID number'}
+        ];
+        
+        // Function to insert placeholder at cursor position
+        function insertPlaceholder(placeholder) {
+            const startPos = templateText.selectionStart;
+            const endPos = templateText.selectionEnd;
+            const text = templateText.value;
+            
+            templateText.value = text.substring(0, startPos) + placeholder + text.substring(endPos);
+            templateText.focus();
+            templateText.selectionStart = startPos + placeholder.length;
+            templateText.selectionEnd = startPos + placeholder.length;
+            
+            updateCharCount();
+        }
+    });
+</script>
+{% endblock %}

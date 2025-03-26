@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Create Order{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Place Order</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Ordering:</h5>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <h4>{{ produce.title }}</h4>
+                                <p class="mb-0">
+                                    <span class="badge bg-success">{{ produce.category.name }}</span>
+                                    <span class="text-muted ms-2">{{ produce.price_per_unit }} TND per {{ produce.unit }}</span>
+                                </p>
+                                <p class="mb-0">
+                                    <small>Sold by: {{ produce.farmer.user.get_full_name }}</small>
+                                    {% if produce.farmer.rating > 0 %}
+                                        <span class="star-rating ms-1">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= produce.farmer.rating|floatformat:"0" %}
+                                                    ★
+                                                {% else %}
+                                                    ☆
+                                                {% endif %}
+                                            {% endfor %}
+                                            ({{ produce.farmer.rating }})
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'create_order' produce.id %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_quantity" class="form-label">Quantity ({{ produce.unit }})</label>
+                            <input type="number" class="form-control {% if form.quantity.errors %}is-invalid{% endif %}" id="id_quantity" name="quantity" value="{{ form.quantity.value|default:'' }}" min="0.01" max="{{ produce.quantity }}" step="0.01" required>
+                            {% if form.quantity.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.quantity.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Maximum available: {{ produce.quantity }} {{ produce.unit }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_delivery_location" class="form-label">Delivery Location</label>
+                            <input type="text" class="form-control {% if form.delivery_location.errors %}is-invalid{% endif %}" id="id_delivery_location" name="delivery_location" value="{{ form.delivery_location.value|default:profile.location }}" required>
+                            {% if form.delivery_location.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.delivery_location.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_delivery_notes" class="form-label">Delivery Notes (Optional)</label>
+                            <textarea class="form-control {% if form.delivery_notes.errors %}is-invalid{% endif %}" id="id_delivery_notes" name="delivery_notes" rows="3">{{ form.delivery_notes.value|default:'' }}</textarea>
+                            {% if form.delivery_notes.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.delivery_notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Add any special instructions for delivery</div>
+                        </div>
+                        
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Order Summary</h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Price per {{ produce.unit }}:</span>
+                                    <span>{{ produce.price_per_unit }} TND</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Quantity:</span>
+                                    <span id="display-quantity">--</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal:</span>
+                                    <span id="display-subtotal">--</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Platform fee (2%):</span>
+                                    <span id="display-fee">--</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span id="display-total">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">I agree to the terms and conditions</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cart-check"></i> Place Order
+                            </button>
+                            <a href="{% url 'produce_detail' produce.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate order summary based on quantity
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('id_quantity');
+        const displayQuantity = document.getElementById('display-quantity');
+        const displaySubtotal = document.getElementById('display-subtotal');
+        const displayFee = document.getElementById('display-fee');
+        const displayTotal = document.getElementById('display-total');
+        const pricePerUnit = {{ produce.price_per_unit }};
+        const unit = '{{ produce.unit }}';
+        
+        function updateSummary() {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const subtotal = quantity * pricePerUnit;
+            const fee = subtotal * 0.02; // 2% platform fee
+            const total = subtotal + fee;
+            
+            displayQuantity.textContent = quantity + ' ' + unit;
+            displaySubtotal.textContent = subtotal.toFixed(2) + ' TND';
+            displayFee.textContent = fee.toFixed(2) + ' TND';
+            displayTotal.textContent = total.toFixed(2) + ' TND';
+        }
+        
+        if (quantityInput) {
+            quantityInput.addEventListener('input', updateSummary);
+            // Initial calculation
+            updateSummary();
+        }
+    });
+</script>
+{% endblock %}

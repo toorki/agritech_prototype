@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTech - Orders{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">My Orders</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                {% if user.farmer_profile %}
+                    Orders for My Produce
+                {% else %}
+                    My Purchase Orders
+                {% endif %}
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>
+                                    {% if user.farmer_profile %}
+                                        Buyer
+                                    {% else %}
+                                        Product
+                                    {% endif %}
+                                </th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.id }}</td>
+                                    <td>
+                                        {% if user.farmer_profile %}
+                                            {{ order.buyer.user.get_full_name }}
+                                        {% else %}
+                                            <a href="{% url 'produce_detail' order.produce.id %}">{{ order.produce.title }}</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.quantity }} {{ order.produce.unit }}</td>
+                                    <td>{{ order.total_amount }} TND</td>
+                                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ order.status }}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        
+                                        {% if user.farmer_profile and order.status == 'pending' %}
+                                            <div class="btn-group btn-group-sm mt-1">
+                                                <a href="{% url 'update_order_status' order.id 'confirmed' %}" class="btn btn-success">
+                                                    <i class="bi bi-check"></i>
+                                                </a>
+                                                <a href="{% url 'update_order_status' order.id 'cancelled' %}" class="btn btn-danger">
+                                                    <i class="bi bi-x"></i>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if orders.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if orders.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in orders.paginator.page_range %}
+                                {% if orders.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > orders.number|add:'-3' and i < orders.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if orders.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.paginator.num_pages }}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+                
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">
+                        {% if user.farmer_profile %}
+                            You don't have any orders for your produce yet.
+                        {% else %}
+                            You haven't placed any orders yet.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if user.buyer_profile %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'produce_list' %}" class="btn btn-primary">
+                            <i class="bi bi-cart"></i> Browse Produce
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Order Status Legend -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Order Status Guide</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-pending me-3">Pending</span>
+                            <span>Order has been placed but not yet confirmed by the farmer</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-confirmed me-3">Confirmed</span>
+                            <span>Order has been confirmed by the farmer and is being prepared</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-paid me-3">Paid</span>
+                            <span>Payment has been received for the order</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-delivered me-3">Delivered</span>
+                            <span>Order has been delivered to the buyer</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-completed me-3">Completed</span>
+                            <span>Order has been completed and received by the buyer</span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge badge-cancelled me-3">Cancelled</span>
+                            <span>Order has been cancelled by either the farmer or buyer</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
