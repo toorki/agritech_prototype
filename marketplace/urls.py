@@ -9,6 +9,9 @@ router.register(r'categories', views.ProduceCategoryViewSet)
 router.register(r'produce', views.ProduceViewSet)
 router.register(r'orders', views.OrderViewSet)
 router.register(r'ratings', views.RatingViewSet)
+router.register(r'sponsorships', views.SponsorshipViewSet)
+router.register(r'sponsorship-milestones', views.SponsorshipMilestoneViewSet)
+router.register(r'sponsorship-payments', views.SponsorshipPaymentViewSet)
 
 urlpatterns = [
     # API endpoints
@@ -23,5 +26,12 @@ urlpatterns = [
     path('orders/', views.order_list, name='order_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
     path('profile/', views.user_profile, name='user_profile'),
-    path('test/', views.test_view, name='test_view'),
+    
+    # Sponsorship endpoints
+    path('sponsorships/', views.sponsorship_list, name='sponsorship_list'),
+    path('sponsorships/<int:sponsorship_id>/', views.sponsorship_detail, name='sponsorship_detail'),
+    path('sponsorships/create/', views.create_sponsorship, name='create_sponsorship'),
+    path('sponsorships/<int:sponsorship_id>/sponsor/', views.sponsor_project, name='sponsor_project'),
+    path('milestones/<int:milestone_id>/update/', views.update_milestone, name='update_milestone'),
+    path('sponsorships/<int:sponsorship_id>/complete/', views.complete_sponsorship, name='complete_sponsorship'),
 ]

@@ -1,20 +1,244 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from rest_framework import viewsets, permissions
-from .models import Farmer, Buyer, ProduceCategory, Produce, Order, Rating
+from .models import (Farmer, Buyer, ProduceCategory, Produce, Order, Rating,
+    Sponsorship, SponsorshipMilestone, SponsorshipPayment
+)
 from .serializers import (
     FarmerSerializer, BuyerSerializer, ProduceCategorySerializer,
-    ProduceSerializer, OrderSerializer, RatingSerializer
+    ProduceSerializer, OrderSerializer, RatingSerializer,
+    SponsorshipSerializer, SponsorshipMilestoneSerializer, SponsorshipPaymentSerializer
 )
 
+class SponsorshipViewSet(viewsets.ModelViewSet):
+    queryset = Sponsorship.objects.all()
+    serializer_class = SponsorshipSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'farmer_profile'):
+            return Sponsorship.objects.filter(farmer=user.farmer_profile)
+        else:
+            return Sponsorship.objects.filter(sponsor=user)
+    
+    def perform_create(self, serializer):
+        if hasattr(self.request.user, 'farmer_profile'):
+            serializer.save(farmer=self.request.user.farmer_profile)
+        else:
+            serializer.save(sponsor=self.request.user)
+
+class SponsorshipMilestoneViewSet(viewsets.ModelViewSet):
+    queryset = SponsorshipMilestone.objects.all()
+    serializer_class = SponsorshipMilestoneSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        sponsorship_id = self.request.query_params.get('sponsorship', None)
+        if sponsorship_id:
+            return SponsorshipMilestone.objects.filter(sponsorship_id=sponsorship_id)
+        return SponsorshipMilestone.objects.none()
+
+class SponsorshipPaymentViewSet(viewsets.ModelViewSet):
+    queryset = SponsorshipPayment.objects.all()
+    serializer_class = SponsorshipPaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        sponsorship_id = self.request.query_params.get('sponsorship', None)
+        if sponsorship_id:
+            return SponsorshipPayment.objects.filter(sponsorship_id=sponsorship_id)
+        return SponsorshipPayment.objects.none()
+    
 def home(request):
     """Redirect to marketplace home"""
     return marketplace_home(request)
 
-def test_view(request):
-    from django.http import HttpResponse
-    return HttpResponse("Test view works!")
+
 # API ViewSets
+def sponsorship_list(request):
+    """List all sponsorship opportunities"""
+    user = request.user
+    
+    if hasattr(user, 'farmer_profile'):
+        # Farmers see their own sponsorship requests
+        sponsorships = Sponsorship.objects.filter(farmer=user.farmer_profile)
+        context = {
+            'sponsorships': sponsorships,
+            'user_type': 'farmer'
+        }
+    elif user.is_authenticated:
+        # Sponsors see available sponsorship opportunities
+        sponsorships = Sponsorship.objects.filter(status='pending')
+        my_sponsorships = Sponsorship.objects.filter(sponsor=user)
+        context = {
+            'sponsorships': sponsorships,
+            'my_sponsorships': my_sponsorships,
+            'user_type': 'sponsor'
+        }
+    else:
+        # Unauthenticated users see available sponsorship opportunities
+        sponsorships = Sponsorship.objects.filter(status='pending')
+        context = {
+            'sponsorships': sponsorships,
+            'user_type': 'guest'
+        }
+    
+    return render(request, 'marketplace/sponsorship_list.html', context)
+
+@login_required
+def sponsorship_detail(request, sponsorship_id):
+    """Detail view for a specific sponsorship"""
+    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id)
+    milestones = SponsorshipMilestone.objects.filter(sponsorship=sponsorship)
+    payments = SponsorshipPayment.objects.filter(sponsorship=sponsorship)
+    
+    # Check if user is the farmer or sponsor
+    is_farmer = hasattr(request.user, 'farmer_profile') and request.user.farmer_profile == sponsorship.farmer
+    is_sponsor = request.user == sponsorship.sponsor
+    
+    context = {
+        'sponsorship': sponsorship,
+        'milestones': milestones,
+        'payments': payments,
+        'is_farmer': is_farmer,
+        'is_sponsor': is_sponsor,
+    }
+    return render(request, 'marketplace/sponsorship_detail.html', context)
+
+@login_required
+def create_sponsorship(request):
+    """Create a new sponsorship request (for farmers)"""
+    if not hasattr(request.user, 'farmer_profile'):
+        return redirect('marketplace_home')
+    
+    if request.method == 'POST':
+        # Process form data
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        amount_requested = request.POST.get('amount_requested')
+        expected_yield = request.POST.get('expected_yield')
+        expected_completion_date = request.POST.get('expected_completion_date')
+        
+        # Create sponsorship
+        sponsorship = Sponsorship.objects.create(
+            farmer=request.user.farmer_profile,
+            title=title,
+            description=description,
+            amount_requested=amount_requested,
+            expected_yield=expected_yield,
+            expected_completion_date=expected_completion_date,
+            status='pending'
+        )
+        
+        # Create milestones
+        milestone_titles = request.POST.getlist('milestone_title')
+        milestone_descriptions = request.POST.getlist('milestone_description')
+        milestone_due_dates = request.POST.getlist('milestone_due_date')
+        
+        for i in range(len(milestone_titles)):
+            SponsorshipMilestone.objects.create(
+                sponsorship=sponsorship,
+                title=milestone_titles[i],
+                description=milestone_descriptions[i],
+                due_date=milestone_due_dates[i],
+                status='pending'
+            )
+        
+        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+    
+    return render(request, 'marketplace/create_sponsorship.html')
+
+@login_required
+def sponsor_project(request, sponsorship_id):
+    """Sponsor a project (for sponsors)"""
+    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id, status='pending')
+    
+    if request.method == 'POST':
+        # Process sponsorship
+        sponsorship.sponsor = request.user
+        sponsorship.status = 'active'
+        sponsorship.save()
+        
+        # Create payment record
+        SponsorshipPayment.objects.create(
+            sponsorship=sponsorship,
+            amount=sponsorship.amount_requested,
+            payment_type='investment',
+            transaction_id=request.POST.get('transaction_id', '')
+        )
+        
+        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+    
+    return render(request, 'marketplace/sponsor_project.html', {'sponsorship': sponsorship})
+
+@login_required
+def update_milestone(request, milestone_id):
+    """Update milestone status (for agents/admins)"""
+    milestone = get_object_or_404(SponsorshipMilestone, id=milestone_id)
+    
+    if not request.user.is_staff:
+        return redirect('sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        notes = request.POST.get('notes', '')
+        
+        milestone.status = status
+        if status == 'completed':
+            milestone.verify(request.user, notes)
+        else:
+            milestone.verification_notes = notes
+            milestone.save()
+        
+        return redirect('sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
+    
+    return render(request, 'marketplace/update_milestone.html', {'milestone': milestone})
+
+@login_required
+def complete_sponsorship(request, sponsorship_id):
+    """Complete a sponsorship and distribute returns"""
+    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id, status='active')
+    
+    if not request.user.is_staff:
+        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+    
+    if request.method == 'POST':
+        actual_yield = request.POST.get('actual_yield')
+        selling_price = request.POST.get('selling_price')
+        
+        # Calculate returns
+        total_revenue = float(actual_yield) * float(selling_price)
+        investment = float(sponsorship.amount_requested)
+        profit = total_revenue - investment
+        
+        if profit > 0:
+            # 40% to sponsor, 40% to farmer, 20% to AgriTech
+            sponsor_return = investment + (profit * 0.4)
+            farmer_return = profit * 0.4
+            agritech_fee = profit * 0.2
+            
+            # Create payment records
+            SponsorshipPayment.objects.create(
+                sponsorship=sponsorship,
+                amount=sponsor_return,
+                payment_type='return',
+                transaction_id=request.POST.get('sponsor_transaction_id', '')
+            )
+            
+            # Update sponsorship status
+            sponsorship.status = 'completed'
+            sponsorship.save()
+        else:
+            # Handle case where there's no profit
+            sponsorship.status = 'completed'
+            sponsorship.save()
+        
+        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+    
+    return render(request, 'marketplace/complete_sponsorship.html', {'sponsorship': sponsorship})
+
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
@@ -85,6 +309,30 @@ def farmer_list(request):
     farmers = Farmer.objects.all().order_by('-rating')
     context = {'farmers': farmers}
     return render(request, 'marketplace/farmer_list.html', context)
+
+def sponsorship_detail(request, sponsorship_id):
+    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id)
+    milestones = SponsorshipMilestone.objects.filter(sponsorship=sponsorship)
+    
+    total_count = milestones.count()
+    completed_count = milestones.filter(status='completed').count()
+    
+    # Calculate a fixed width for the progress bar
+    if total_count == 0:
+        progress_width = "0%"
+    else:
+        # Calculate percentage and convert to string with % symbol
+        progress_width = f"{int((completed_count / total_count) * 100)}%"
+    
+    context = {
+        'sponsorship': sponsorship,
+        'milestones': milestones,
+        'total_count': total_count,
+        'completed_count': completed_count,
+        'progress_width': progress_width,  # Pass the pre-formatted width
+    }
+    
+    return render(request, 'marketplace/sponsorship_detail.html', context)
 
 def farmer_detail(request, farmer_id):
     """Detail view for a specific farmer"""

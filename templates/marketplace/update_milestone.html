@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Update Milestone{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Update Milestone: {{ milestone.title }}</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Milestone Details</h5>
+            <p><strong>Project:</strong> {{ milestone.sponsorship.title }}</p>
+            <p><strong>Farmer:</strong> {{ milestone.sponsorship.farmer.user.get_full_name }}</p>
+            <p><strong>Description:</strong> {{ milestone.description }}</p>
+            <p><strong>Due Date:</strong> {{ milestone.due_date }}</p>
+            <p><strong>Current Status:</strong> {{ milestone.get_status_display }}</p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Update Status</h5>
+                
+                <div class="mb-3">
+                    <label for="status" class="form-label">New Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="pending" {% if milestone.status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="completed" {% if milestone.status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="failed" {% if milestone.status == 'failed' %}selected{% endif %}>Failed</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Verification Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="4">{{ milestone.verification_notes }}</textarea>
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Update Milestone</button>
+        <a href="{% url 'sponsorship_detail' milestone.sponsorship.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

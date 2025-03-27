@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Sponsor Project{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Sponsor Project: {{ sponsorship.title }}</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Project Details</h5>
+                    <p class="card-text">{{ sponsorship.description }}</p>
+                    <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
+                    <p><strong>Amount Requested:</strong> {{ sponsorship.amount_requested }}</p>
+                    <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+                    <p><strong>Expected Completion:</strong> {{ sponsorship.expected_completion_date }}</p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Sponsorship Terms</h5>
+                    <p>By sponsoring this project, you agree to the following terms:</p>
+                    <ul>
+                        <li>You will provide {{ sponsorship.amount_requested }} in funding.</li>
+                        <li>The expected return is based on the actual yield and market price at harvest time.</li>
+                        <li>Profit will be split: 40% to you (sponsor), 40% to the farmer, and 20% to AgriTech.</li>
+                        <li>Project progress will be monitored through milestones verified by AgriTech agents.</li>
+                        <li>In case of project failure, your investment may be partially or fully lost.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Payment Information</h5>
+                        <p>Please complete your payment of {{ sponsorship.amount_requested }} using Flouci or another payment method.</p>
+                        
+                        <div class="mb-3">
+                            <label for="transaction_id" class="form-label">Transaction ID (optional)</label>
+                            <input type="text" class="form-control" id="transaction_id" name="transaction_id">
+                            <div class="form-text">If you have a transaction ID from your payment, please enter it here.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms_agreement" required>
+                    <label class="form-check-label" for="terms_agreement">
+                        I agree to the sponsorship terms and confirm that I have made the payment.
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Confirm Sponsorship</button>
+            </form>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Potential Returns</h5>
+                    <p>Based on the expected yield and current market prices:</p>
+                    
+                    <div class="mb-3">
+                        <label for="market_price" class="form-label">Estimated Market Price</label>
+                        <input type="number" class="form-control" id="market_price" value="3.00" step="0.01">
+                    </div>
+                    
+                    <div id="calculation-results">
+                        <p><strong>Investment:</strong> <span id="investment">{{ sponsorship.amount_requested }}</span></p>
+                        <p><strong>Expected Revenue:</strong> <span id="revenue">0</span></p>
+                        <p><strong>Expected Profit:</strong> <span id="profit">0</span></p>
+                        <p><strong>Your Return (40% of profit + investment):</strong> <span id="sponsor_return">0</span></p>
+                        <p><strong>Farmer's Share (40% of profit):</strong> <span id="farmer_share">0</span></p>
+                        <p><strong>AgriTech Fee (20% of profit):</strong> <span id="agritech_fee">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const marketPriceInput = document.getElementById('market_price');
+        const investment = parseFloat('{{ sponsorship.amount_requested }}');
+        const expectedYield = parseFloat('{{ sponsorship.expected_yield }}');
+        
+        function updateCalculations() {
+            const marketPrice = parseFloat(marketPriceInput.value);
+            const revenue = expectedYield * marketPrice;
+            const profit = revenue - investment;
+            
+            const sponsorReturn = profit > 0 ? investment + (profit * 0.4) : investment;
+            const farmerShare = profit > 0 ? profit * 0.4 : 0;
+            const agritechFee = profit > 0 ? profit * 0.2 : 0;
+            
+            document.getElementById('investment').textContent = investment.toFixed(2);
+            document.getElementById('revenue').textContent = revenue.toFixed(2);
+            document.getElementById('profit').textContent = profit.toFixed(2);
+            document.getElementById('sponsor_return').textContent = sponsorReturn.toFixed(2);
+            document.getElementById('farmer_share').textContent = farmerShare.toFixed(2);
+            document.getElementById('agritech_fee').textContent = agritechFee.toFixed(2);
+        }
+        
+        marketPriceInput.addEventListener('input', updateCalculations);
+        updateCalculations();
+    });
+</script>
+{% endblock %}

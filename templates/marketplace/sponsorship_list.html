@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Sponsorship Opportunities{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Sponsorship Opportunities</h1>
+    
+    {% if user_type == 'farmer' %}
+        <div class="mb-4">
+            <a href="{% url 'create_sponsorship' %}" class="btn btn-primary">Create New Sponsorship Request</a>
+        </div>
+        
+        <h2>My Sponsorship Requests</h2>
+        {% if sponsorships %}
+            <div class="row">
+                {% for sponsorship in sponsorships %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ sponsorship.title }}</h5>
+                                <p class="card-text">{{ sponsorship.description|truncatechars:100 }}</p>
+                                <p><strong>Amount Requested:</strong> {{ sponsorship.amount_requested }}</p>
+                                <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+                                <p><strong>Status:</strong> {{ sponsorship.get_status_display }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'sponsorship_detail' sponsorship.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">You haven't created any sponsorship requests yet.</div>
+        {% endif %}
+    
+    {% elif user_type == 'sponsor' %}
+        <h2>Available Sponsorship Opportunities</h2>
+        {% if sponsorships %}
+            <div class="row">
+                {% for sponsorship in sponsorships %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ sponsorship.title }}</h5>
+                                <p class="card-text">{{ sponsorship.description|truncatechars:100 }}</p>
+                                <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
+                                <p><strong>Amount Requested:</strong> {{ sponsorship.amount_requested }}</p>
+                                <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+                                <p><strong>Expected Completion:</strong> {{ sponsorship.expected_completion_date }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'sponsorship_detail' sponsorship.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No sponsorship opportunities available at the moment.</div>
+        {% endif %}
+        
+        <h2 class="mt-5">My Sponsored Projects</h2>
+        {% if my_sponsorships %}
+            <div class="row">
+                {% for sponsorship in my_sponsorships %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ sponsorship.title }}</h5>
+                                <p class="card-text">{{ sponsorship.description|truncatechars:100 }}</p>
+                                <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
+                                <p><strong>Amount Invested:</strong> {{ sponsorship.amount_requested }}</p>
+                                <p><strong>Status:</strong> {{ sponsorship.get_status_display }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'sponsorship_detail' sponsorship.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">You haven't sponsored any projects yet.</div>
+        {% endif %}
+    
+    {% else %}
+        <h2>Available Sponsorship Opportunities</h2>
+        {% if sponsorships %}
+            <div class="row">
+                {% for sponsorship in sponsorships %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ sponsorship.title }}</h5>
+                                <p class="card-text">{{ sponsorship.description|truncatechars:100 }}</p>
+                                <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
+                                <p><strong>Amount Requested:</strong> {{ sponsorship.amount_requested }}</p>
+                                <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+                                <p><strong>Expected Completion:</strong> {{ sponsorship.expected_completion_date }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'login' %}" class="btn btn-primary">Login to Sponsor</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No sponsorship opportunities available at the moment.</div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

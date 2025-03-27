@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Sponsorship{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Complete Sponsorship: {{ sponsorship.title }}</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Project Details</h5>
+            <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
+            <p><strong>Sponsor:</strong> {{ sponsorship.sponsor.get_full_name }}</p>
+            <p><strong>Amount Invested:</strong> {{ sponsorship.amount_requested }}</p>
+            <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Harvest Results</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="actual_yield" class="form-label">Actual Yield</label>
+                        <input type="number" class="form-control" id="actual_yield" name="actual_yield" step="0.01" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="selling_price" class="form-label">Selling Price (per unit)</label>
+                        <input type="number" class="form-control" id="selling_price" name="selling_price" step="0.01" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Payment Distribution</h5>
+                <div id="calculation-results">
+                    <p><strong>Investment:</strong> <span id="investment">{{ sponsorship.amount_requested }}</span></p>
+                    <p><strong>Total Revenue:</strong> <span id="revenue">0</span></p>
+                    <p><strong>Profit:</strong> <span id="profit">0</span></p>
+                    <p><strong>Sponsor Return (40% of profit + investment):</strong> <span id="sponsor_return">0</span></p>
+                    <p><strong>Farmer's Share (40% of profit):</strong> <span id="farmer_share">0</span></p>
+                    <p><strong>AgriTech Fee (20% of profit):</strong> <span id="agritech_fee">0</span></p>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="sponsor_transaction_id" class="form-label">Sponsor Payment Transaction ID (optional)</label>
+                    <input type="text" class="form-control" id="sponsor_transaction_id" name="sponsor_transaction_id">
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Complete Sponsorship</button>
+        <a href="{% url 'sponsorship_detail' sponsorship.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const actualYieldInput = document.getElementById('actual_yield');
+        const sellingPriceInput = document.getElementById('selling_price');
+        const investment = parseFloat('{{ sponsorship.amount_requested }}');
+        
+        function updateCalculations() {
+            const actualYield = parseFloat(actualYieldInput.value) || 0;
+            const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+            
+            const revenue = actualYield * sellingPrice;
+            const profit = revenue - investment;
+            
+            const sponsorReturn = profit > 0 ? investment + (profit * 0.4) : investment;
+            const farmerShare = profit > 0 ? profit * 0.4 : 0;
+            const agritechFee = profit > 0 ? profit * 0.2 : 0;
+            
+            document.getElementById('investment').textContent = investment.toFixed(2);
+            document.getElementById('revenue').textContent = revenue.toFixed(2);
+            document.getElementById('profit').textContent = profit.toFixed(2);
+            document.getElementById('sponsor_return').textContent = sponsorReturn.toFixed(2);
+            document.getElementById('farmer_share').textContent = farmerShare.toFixed(2);
+            document.getElementById('agritech_fee').textContent = agritechFee.toFixed(2);
+        }
+        
+        actualYieldInput.addEventListener('input', updateCalculations);
+        sellingPriceInput.addEventListener('input', updateCalculations);
+    });
+</script>
+{% endblock %}

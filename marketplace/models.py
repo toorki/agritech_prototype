@@ -2,6 +2,68 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 
+class Sponsorship(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    )
+    
+    farmer = models.ForeignKey('Farmer', on_delete=models.CASCADE, related_name='sponsorships')
+    sponsor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsored_projects', null=True, blank=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    amount_requested = models.DecimalField(max_digits=10, decimal_places=2)
+    expected_yield = models.DecimalField(max_digits=10, decimal_places=2)
+    expected_completion_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    def __str__(self):
+        return f"{self.title} - {self.farmer.user.username}"
+
+class SponsorshipMilestone(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    )
+    
+    sponsorship = models.ForeignKey(Sponsorship, on_delete=models.CASCADE, related_name='milestones')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    due_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_milestones')
+    verification_date = models.DateTimeField(null=True, blank=True)
+    verification_notes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.title} - {self.sponsorship.title}"
+    
+    def verify(self, user, notes=""):
+        self.status = 'completed'
+        self.verified_by = user
+        self.verification_date = timezone.now()
+        self.verification_notes = notes
+        self.save()
+
+class SponsorshipPayment(models.Model):
+    TYPE_CHOICES = (
+        ('investment', 'Investment'),
+        ('return', 'Return'),
+    )
+    
+    sponsorship = models.ForeignKey(Sponsorship, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=100, blank=True)
+    
+    def __str__(self):
+        return f"{self.payment_type} - {self.amount} - {self.sponsorship.title}"
+    
 class Farmer(models.Model):
     """Model representing a farmer in the system"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='farmer_profile')
