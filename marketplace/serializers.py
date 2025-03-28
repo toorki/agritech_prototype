@@ -1,7 +1,48 @@
 from rest_framework import serializers
 from .models import Farmer, Buyer, ProduceCategory, Produce, Order, Rating
 from django.contrib.auth.models import User
+from .models import (
+    Farmer, Buyer, ProduceCategory, Produce, Order, Rating,
+    Sponsorship, SponsorshipMilestone,SponsorshipPayment,
+)
 
+# Add to your existing serializers.py file
+
+class SponsorshipMilestoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SponsorshipMilestone
+        fields = '__all__'
+
+class SponsorshipSerializer(serializers.ModelSerializer):
+    milestones = SponsorshipMilestoneSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Sponsorship
+        fields = '__all__'
+
+
+class SponsorshipSerializer(serializers.ModelSerializer):
+    farmer_name = serializers.ReadOnlyField(source='farmer.user.get_full_name')
+    sponsor_name = serializers.ReadOnlyField(source='sponsor.get_full_name')
+    
+    class Meta:
+        model = Sponsorship
+        fields = ['id', 'farmer', 'farmer_name', 'sponsor', 'sponsor_name', 'title', 
+                  'description', 'amount_requested', 'expected_yield', 
+                  'expected_completion_date', 'created_at', 'status']
+
+class SponsorshipMilestoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SponsorshipMilestone
+        fields = ['id', 'sponsorship', 'title', 'description', 'due_date', 
+                  'status', 'verified_by', 'verification_date', 'verification_notes']
+
+class SponsorshipPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SponsorshipPayment
+        fields = ['id', 'sponsorship', 'amount', 'payment_type', 
+                  'payment_date', 'transaction_id']
+        
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

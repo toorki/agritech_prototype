@@ -1,3 +1,18 @@
+{% extends "marketplace/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'marketplace/css/progress_bar.css' %}">
+<style>
+    /* Dynamic width styling using Django template variable */
+    .progress-width-custom {
+        width: {{ progress_width }};
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
 {% extends "base.html" %}
 
 {% block title %}{{ sponsorship.title }}{% endblock %}
@@ -106,11 +121,11 @@
                         {% endif %}
                     </div>
                     <h6>Milestone Progress</h6>
-                        <div class="progress mb-3">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ completed_count|floatformat:0 / total_count * 100 }}%">
-                                {{ completed_count }}/{{ total_count }}
-                            </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar bg-success progress-width-custom" role="progressbar">
+                            {{ completed_count }}/{{ total_count }}
                         </div>
+                    </div>                 
                 </div>
             </div>
         </div>
