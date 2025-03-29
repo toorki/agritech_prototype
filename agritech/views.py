@@ -3,9 +3,13 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from .models import Farmer, Sponsor, Buyer, Sponsorship, Produce, Order, Rating
+from marketplace.models import Farmer, Sponsor, Buyer, Sponsorship, Produce, Order, Rating
+from . import views
 
 # Existing views (assumed based on URLs)
+def index(request):
+    return render(request, 'index.html', {'title': 'AgriTech Platform'})
+
 def home(request):
     return render(request, 'marketplace/home.html')
 
