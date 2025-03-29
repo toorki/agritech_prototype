@@ -1,59 +1,129 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2E7D32;
+        }
+        .btn {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #2E7D32;
+        }
+        .feature {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .feature-icon {
+            font-size: 2em;
+            margin-right: 15px;
+            color: #4CAF50;
+        }
+        .feature-text {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AgriTech Platform</h1>
+        <p>Empowering Tunisian Farmers with Technology</p>
+    </header>
 
-{% block content %}
-<div class="container">
-    <h1>AgriTech Marketplace</h1>
-    
-    <div class="card">
-        <h2>Product Categories</h2>
-        <div class="categories">
-            {% if categories %}
-                {% for category in categories %}
-                    <div class="category-item">
-                        <h3>{{ category.name }}</h3>
-                        <a href="{% url 'produce_list' %}?category={{ category.id }}" class="btn">Browse Products</a>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>No categories available.</p>
-            {% endif %}
+    <div class="container">
+        <div class="card">
+            <h2>Welcome to the AgriTech Platform</h2>
+            <p>This is a demonstration of the AgriTech platform prototype. The full version includes marketplace functionality, SMS notifications, and an admin interface.</p>
+            
+            <p>The server is working correctly! This page confirms that the basic Django setup is functioning.</p>
         </div>
-    </div>
-    
-    <div class="card">
-        <h2>Featured Products</h2>
-        <div class="products">
-            {% if featured_produce %}
-                {% for produce in featured_produce %}
-                    <div class="product-item">
-                        <h3>{{ produce.title }}</h3>
-                        <p>{{ produce.description }}</p>
-                        <p>Price: {{ produce.price_per_unit }} TND per {{ produce.unit }}</p>
-                        <p>Quantity: {{ produce.quantity }} {{ produce.unit }}</p>
-                        <p>Location: {{ produce.location }}</p>
-                        <a href="{% url 'produce_detail' produce.id %}" class="btn">View Details</a>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>No featured products available.</p>
-            {% endif %}
-        </div>
-    </div>
-    
-    {% if top_farmers %}
-    <div class="card">
-        <h2>Top Farmers</h2>
-        <div class="farmers">
-            {% for farmer in top_farmers %}
-                <div class="farmer-item">
-                    <h3>{{ farmer.user.get_full_name }}</h3>
-                    <p>Location: {{ farmer.location }}</p>
-                    <p>Rating: {{ farmer.rating }}/5</p>
-                    <a href="{% url 'farmer_detail' farmer.id %}" class="btn">View Profile</a>
+
+        <div class="card">
+            <h2>Key Features</h2>
+            
+            <div class="feature">
+                <div class="feature-icon">🛒</div>
+                <div class="feature-text">
+                    <h3>Marketplace</h3>
+                    <p>Farmers can list their produce and buyers can purchase directly, eliminating middlemen and increasing farmer profits.</p>
                 </div>
-            {% endfor %}
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <div class="feature-text">
+                    <h3>SMS Notifications</h3>
+                    <p>Weather alerts, market price updates, and order notifications delivered directly to farmers' phones.</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <div class="feature-text">
+                    <h3>Analytics Dashboard</h3>
+                    <p>Data-driven insights to help farmers make better decisions about planting, harvesting, and selling.</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🌱</div>
+                <div class="feature-text">
+                    <h3>IoT Integration (Future)</h3>
+                    <p>Soil moisture, temperature, and pest monitoring through affordable sensor networks.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Get Started</h2>
+            <p>Login with the following credentials to explore the platform:</p>
+            <ul>
+                <li><strong>Admin:</strong> username=admin, password=admin123</li>
+                <li><strong>Farmer:</strong> username=salah_farmer, password=password123</li>
+                <li><strong>Sponsor/Buyer:</strong> username=ahmed_sponsor, password=password123</li>
+            </ul>
+            <a href="/admin/" class="btn">Admin Dashboard</a>
+            <a href="/marketplace/" class="btn">Marketplace</a>
+            <a href="{% url 'marketplace:login' %}" class="btn">Login</a>
         </div>
     </div>
-    {% endif %}
-</div>
-{% endblock %}
+</body>
+</html>
