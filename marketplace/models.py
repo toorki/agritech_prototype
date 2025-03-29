@@ -3,6 +3,15 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
+class Sponsor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sponsor_profile')
+    phone_number = models.CharField(max_length=15)
+    organization = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.organization}"
 
 class Sponsorship(models.Model):
     STATUS_CHOICES = (
@@ -13,7 +22,7 @@ class Sponsorship(models.Model):
     )
     
     farmer = models.ForeignKey('Farmer', on_delete=models.CASCADE, related_name='sponsorships')
-    sponsor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsored_projects', null=True, blank=True)
+    sponsor = models.ForeignKey(Sponsor, on_delete=models.CASCADE, related_name='sponsored_projects', null=True, blank=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
     amount_requested = models.DecimalField(max_digits=10, decimal_places=2)
@@ -58,6 +67,7 @@ class SponsorshipPayment(models.Model):
     )
     
     sponsorship = models.ForeignKey(Sponsorship, on_delete=models.CASCADE, related_name='payments')
+    sponsor = models.ForeignKey(Sponsor, on_delete=models.CASCADE, related_name='sponsorship_payments', null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     payment_date = models.DateTimeField(auto_now_add=True)
@@ -89,7 +99,6 @@ class Farmer(models.Model):
         self.total_ratings += 1
         self.save()
 
-
 class Buyer(models.Model):
     """Model representing a buyer in the system"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='buyer_profile')
@@ -101,7 +110,6 @@ class Buyer(models.Model):
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.location}"
 
-
 class ProduceCategory(models.Model):
     """Model representing categories of agricultural produce"""
     name = models.CharField(max_length=100)
@@ -112,7 +120,6 @@ class ProduceCategory(models.Model):
     
     class Meta:
         verbose_name_plural = "Produce Categories"
-
 
 class Produce(models.Model):
     """Model representing agricultural produce listings"""
@@ -143,7 +150,6 @@ class Produce(models.Model):
     def total_price(self):
         """Calculate the total price of the produce listing"""
         return self.quantity * self.price_per_unit
-
 
 class Order(models.Model):
     """Model representing orders placed by buyers"""
@@ -179,7 +185,6 @@ class Order(models.Model):
             self.platform_fee = subtotal * 0.02  # 2% fee
             self.total_amount = subtotal + self.platform_fee
         super().save(*args, **kwargs)
-
 
 class Rating(models.Model):
     """Model representing ratings given by buyers to farmers"""
