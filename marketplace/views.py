@@ -52,11 +52,6 @@ class SponsorshipPaymentViewSet(viewsets.ModelViewSet):
         if sponsorship_id:
             return SponsorshipPayment.objects.filter(sponsorship_id=sponsorship_id)
         return SponsorshipPayment.objects.none()
-    
-def home(request):
-    """Redirect to marketplace home"""
-    return marketplace_home(request)
-
 
 # API ViewSets
 def sponsorship_list(request):
@@ -291,7 +286,6 @@ class RatingViewSet(viewsets.ModelViewSet):
     serializer_class = RatingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-
 # Web UI Views
 def marketplace_home(request):
     """Home page for the marketplace"""
@@ -384,23 +378,6 @@ def produce_detail(request, produce_id):
     }
     return render(request, 'marketplace/produce_detail.html', context)
 
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            if hasattr(user, 'farmer'):
-                return redirect('marketplace:farmer_dashboard')
-            elif hasattr(user, 'sponsor'):
-                return redirect('marketplace:sponsor_dashboard')
-            else:
-                return redirect('marketplace:marketplace_home')
-        else:
-            messages.error(request, 'Invalid username or password.')
-    return render(request, 'marketplace/login.html', {})
-
 def logout_view(request):
     logout(request)
     return redirect('marketplace:marketplace_home')
@@ -458,7 +435,6 @@ def user_profile(request):
     else:
         return redirect('marketplace_home')
     
-    
     return render(request, 'marketplace/user_profile.html', context)
 
 @login_required
@@ -498,5 +474,3 @@ def buyer_dashboard(request):
         'orders': orders,
     }
     return render(request, 'marketplace/buyer_dashboard.html', context)
-
-home = marketplace_home

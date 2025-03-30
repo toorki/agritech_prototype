@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from agritech.views import CustomLoginView  # Import CustomLoginView
 
 # Define the app namespace
 app_name = 'marketplace'
@@ -41,7 +42,7 @@ urlpatterns = [
     path('sponsorships/<int:sponsorship_id>/complete/', views.complete_sponsorship, name='complete_sponsorship'),
     
     # Authentication endpoints
-    path('login/', views.login_view, name='login'),
+    path('login/', CustomLoginView.as_view(), name='login'),  # Use CustomLoginView
     path('logout/', views.logout_view, name='logout'),
     
     # Dashboard endpoints
