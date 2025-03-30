@@ -438,6 +438,43 @@ def user_profile(request):
     return render(request, 'marketplace/user_profile.html', context)
 
 @login_required
+def add_produce(request):
+    try:
+        farmer = Farmer.objects.get(user=request.user)
+    except Farmer.DoesNotExist:
+        return redirect('marketplace:marketplace_home')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        category_id = request.POST.get('category')
+        price_per_unit = request.POST.get('price_per_unit')
+        unit = request.POST.get('unit')
+        quantity = request.POST.get('quantity')
+        location = request.POST.get('location')
+        
+        try:
+            category = ProduceCategory.objects.get(id=category_id)
+            Produce.objects.create(
+                farmer=farmer,
+                name=name,
+                category=category,
+                price_per_unit=price_per_unit,
+                unit=unit,
+                quantity=quantity,
+                location=location,
+                is_available=True
+            )
+            messages.success(request, 'Produce added successfully!')
+            return redirect('marketplace:farmer_dashboard')
+        except ProduceCategory.DoesNotExist:
+            messages.error(request, 'Invalid category selected.')
+        except Exception as e:
+            messages.error(request, f'Error adding produce: {str(e)}')
+    
+    categories = ProduceCategory.objects.all()
+    return render(request, 'marketplace/add_produce.html', {'categories': categories})
+
+@login_required
 def farmer_dashboard(request):
     if not hasattr(request.user, 'farmer_profile'):
         return redirect('marketplace:marketplace_home')

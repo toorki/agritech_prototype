@@ -1,41 +1,188 @@
 {% extends 'base.html' %}
 
-{% block title %}Farmer Dashboard{% endblock %}
+{% block title %}Farmer Dashboard - AgriTech{% endblock %}
 
 {% block content %}
-<h1>Farmer Dashboard</h1>
-<h2>Welcome, {{ farmer.user.username }}</h2>
+<style>
+    /* Custom Styling for Farmer Dashboard */
+    body {
+        background-color: #f8f9fa; /* Light gray background for the page */
+    }
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .dashboard-container h1 {
+        font-weight: 700;
+        color: #2c3e50; /* Dark blue-gray for the heading */
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .dashboard-container h2 {
+        font-weight: 600;
+        color: #34495e; /* Slightly lighter blue-gray for section headings */
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
+    /* Add Produce Button */
+    .add-produce-btn {
+        background-color: #28a745; /* Green */
+        border-color: #28a745;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: background-color 0.3s ease;
+    }
+    .add-produce-btn:hover {
+        background-color: #218838; /* Darker green on hover */
+        border-color: #1e7e34;
+    }
+    /* Messages */
+    .alert {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .card-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+    }
+    .card-text {
+        font-size: 0.95rem;
+        color: #6c757d; /* Gray for card text */
+        margin-bottom: 10px;
+    }
+    /* Produce Cards */
+    .produce-card {
+        background-color: #e6f4ea; /* Light green */
+    }
+    /* Sponsorship Cards */
+    .sponsorship-card {
+        background-color: #e6f0fa; /* Light blue */
+    }
+    /* Order Cards */
+    .order-card {
+        background-color: #fff9e6; /* Light yellow */
+    }
+    /* View Details Button */
+    .view-details-btn {
+        background-color: #007bff; /* Blue */
+        border-color: #007bff;
+        font-weight: 500;
+        padding: 8px 16px;
+        transition: background-color 0.3s ease;
+    }
+    .view-details-btn:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+        border-color: #004085;
+    }
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 15px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+    }
+</style>
 
-<h3>Your Produce</h3>
-{% if produce_items %}
-    <ul>
-    {% for produce in produce_items %}
-        <li>{{ produce.name }} - {{ produce.price }} per {{ produce.unit }}</li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No produce listed yet.</p>
-{% endif %}
+<div class="dashboard-container">
+    <h1>Welcome, {{ farmer.user.username }}!</h1>
 
-<h3>Your Orders</h3>
-{% if orders %}
-    <ul>
-    {% for order in orders %}
-        <li>Order #{{ order.id }} - {{ order.quantity }} {{ order.produce.unit }} of {{ order.produce.name }}</li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No orders yet.</p>
-{% endif %}
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 
-<h3>Your Sponsorships</h3>
-{% if sponsorships %}
-    <ul>
-    {% for sponsorship in sponsorships %}
-        <li>{{ sponsorship.title }} - {{ sponsorship.status }}</li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No sponsorships yet.</p>
-{% endif %}
-{% endblock %}
+    <!-- Add Produce Button -->
+    <div class="mb-4 text-center">
+        <a href="{% url 'marketplace:add_produce' %}" class="btn btn-primary add-produce-btn">Add New Produce</a>
+    </div>
+
+    <!-- Produce Section -->
+    <h2>Your Produce</h2>
+    {% if produce_items %}
+        <div class="row">
+            {% for produce in produce_items %}
+                <div class="col-md-4 mb-4">
+                    <div class="card produce-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ produce.name }}</h5>
+                            <p class="card-text">Category: {{ produce.category.name }}</p>
+                            <p class="card-text">Price: ${{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                            <p class="card-text">Quantity: {{ produce.quantity }}</p>
+                            <p class="card-text">Location: {{ produce.location }}</p>
+                            <a href="{% url 'marketplace:produce_detail' produce.id %}" class="btn view-details-btn">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You have no produce listed. Add some using the button above!</p>
+    {% endif %}
+
+    <!-- Sponsorships Section -->
+    <h2>Your Sponsorships</h2>
+    {% if sponsorships %}
+        <div class="row">
+            {% for sponsorship in sponsorships %}
+                <div class="col-md-4 mb-4">
+                    <div class="card sponsorship-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ sponsorship.title }}</h5>
+                            <p class="card-text">Amount Requested: ${{ sponsorship.amount_requested }}</p>
+                            <p class="card-text">Status: {{ sponsorship.status }}</p>
+                            <a href="{% url 'marketplace:sponsorship_detail' sponsorship.id %}" class="btn view-details-btn">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You have no sponsorships. Create one <a href="{% url 'marketplace:create_sponsorship' %}" class="text-primary">here</a>.</p>
+    {% endif %}
+
+    <!-- Orders Section -->
+    <h2>Your Orders</h2>
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+                <div class="col-md-4 mb-4">
+                    <div class="card order-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Order #{{ order.id }}</h5>
+                            <p class="card-text">Produce: {{ order.produce.name }}</p>
+                            <p class="card-text">Buyer: {{ order.buyer.user.username }}</p>
+                            <p class="card-text">Quantity: {{ order.quantity }}</p>
+                            <a href="{% url 'marketplace:order_detail' order.id %}" class="btn view-details-btn">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You have no orders yet.</p>
+    {% endif %}
+</div>
+{% endblock %}  <!-- Add the closing tag here -->
