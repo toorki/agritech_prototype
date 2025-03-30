@@ -2,6 +2,10 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
+# Define the app namespace
+app_name = 'marketplace'
+
+# Set up the DRF router for API endpoints
 router = DefaultRouter()
 router.register(r'farmers', views.FarmerViewSet)
 router.register(r'buyers', views.BuyerViewSet)
@@ -13,6 +17,7 @@ router.register(r'sponsorships', views.SponsorshipViewSet)
 router.register(r'sponsorship-milestones', views.SponsorshipMilestoneViewSet)
 router.register(r'sponsorship-payments', views.SponsorshipPaymentViewSet)
 
+# Define URL patterns
 urlpatterns = [
     # API endpoints
     path('api/', include(router.urls)),
@@ -34,4 +39,13 @@ urlpatterns = [
     path('sponsorships/<int:sponsorship_id>/sponsor/', views.sponsor_project, name='sponsor_project'),
     path('milestones/<int:milestone_id>/update/', views.update_milestone, name='update_milestone'),
     path('sponsorships/<int:sponsorship_id>/complete/', views.complete_sponsorship, name='complete_sponsorship'),
+    
+    # Authentication endpoints
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # Dashboard endpoints
+    path('farmer/dashboard/', views.farmer_dashboard, name='farmer_dashboard'),
+    path('sponsor/dashboard/', views.sponsor_dashboard, name='sponsor_dashboard'),
+    path('buyer/dashboard/', views.buyer_dashboard, name='buyer_dashboard'),
 ]

@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from rest_framework import viewsets, permissions
@@ -382,6 +384,27 @@ def produce_detail(request, produce_id):
     }
     return render(request, 'marketplace/produce_detail.html', context)
 
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            if hasattr(user, 'farmer'):
+                return redirect('marketplace:farmer_dashboard')
+            elif hasattr(user, 'sponsor'):
+                return redirect('marketplace:sponsor_dashboard')
+            else:
+                return redirect('marketplace:marketplace_home')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'marketplace/login.html', {})
+
+def logout_view(request):
+    logout(request)
+    return redirect('marketplace:marketplace_home')
+
 @login_required
 def order_list(request):
     """List orders for the current user"""
@@ -437,5 +460,43 @@ def user_profile(request):
     
     
     return render(request, 'marketplace/user_profile.html', context)
+
+@login_required
+def farmer_dashboard(request):
+    if not hasattr(request.user, 'farmer_profile'):
+        return redirect('marketplace:marketplace_home')
+    farmer = request.user.farmer_profile
+    produce_items = Produce.objects.filter(farmer=farmer)
+    orders = Order.objects.filter(produce__farmer=farmer)
+    sponsorships = Sponsorship.objects.filter(farmer=farmer)
+    context = {
+        'farmer': farmer,
+        'produce_items': produce_items,
+        'orders': orders,
+        'sponsorships': sponsorships,
+    }
+    return render(request, 'marketplace/farmer_dashboard.html', context)
+
+@login_required
+def sponsor_dashboard(request):
+    if not hasattr(request.user, 'sponsor'):
+        return redirect('marketplace:marketplace_home')
+    sponsorships = Sponsorship.objects.filter(sponsor=request.user)
+    context = {
+        'sponsorships': sponsorships,
+    }
+    return render(request, 'marketplace/sponsor_dashboard.html', context)
+
+@login_required
+def buyer_dashboard(request):
+    if not hasattr(request.user, 'buyer_profile'):
+        return redirect('marketplace:marketplace_home')
+    buyer = request.user.buyer_profile
+    orders = Order.objects.filter(buyer=buyer)
+    context = {
+        'buyer': buyer,
+        'orders': orders,
+    }
+    return render(request, 'marketplace/buyer_dashboard.html', context)
 
 home = marketplace_home
