@@ -42,12 +42,15 @@ urlpatterns = [
     path('sponsorships/<int:sponsorship_id>/complete/', views.complete_sponsorship, name='complete_sponsorship'),
     
     # Authentication endpoints
-    path('login/', CustomLoginView.as_view(), name='login'),
+    path('login/farmer/', CustomLoginView.as_view(), name='login_farmer'),
+    path('login/sponsor/', CustomLoginView.as_view(), name='login_sponsor'),
+    path('login/buyer/', CustomLoginView.as_view(), name='login_buyer'),
+    path('login/', CustomLoginView.as_view(), name='login'),  # Keep the general login for now
     path('logout/', views.logout_view, name='logout'),
     
     # Dashboard endpoints
     path('farmer/dashboard/', views.farmer_dashboard, name='farmer_dashboard'),
-    path('farmer/add-produce/', views.add_produce, name='add_produce'),  # Ensure this line is present
+    path('farmer/add-produce/', views.add_produce, name='add_produce'),
     path('sponsor/dashboard/', views.sponsor_dashboard, name='sponsor_dashboard'),
     path('buyer/dashboard/', views.buyer_dashboard, name='buyer_dashboard'),
 ]

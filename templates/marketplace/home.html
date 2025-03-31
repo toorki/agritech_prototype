@@ -41,4 +41,13 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- New Role-Specific Login Buttons -->
+    <h2>Log In</h2>
+    <div class="btn-group" role="group">
+        <a href="{% url 'marketplace:login_farmer' %}" class="btn btn-success">Farmer</a>
+        <a href="{% url 'marketplace:login_sponsor' %}" class="btn btn-warning">Sponsor</a>
+        <a href="{% url 'marketplace:login_buyer' %}" class="btn btn-info">Buyer</a>
+    </div>
+    <p>Don't have an account? <a href="{% url 'marketplace:marketplace_home' %}#register">Register here</a>.</p>
 {% endblock %}

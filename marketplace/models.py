@@ -11,7 +11,7 @@ class UserProfile(models.Model):
         ('sponsor', 'Sponsor'),
         ('buyer', 'Buyer'),
     )
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, unique=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
