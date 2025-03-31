@@ -3,15 +3,31 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
+class UserProfile(models.Model):
+    """Model to enforce a single role per user"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    ROLE_CHOICES = (
+        ('farmer', 'Farmer'),
+        ('sponsor', 'Sponsor'),
+        ('buyer', 'Buyer'),
+    )
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
 class Sponsor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sponsor_profile')
+    """Model representing a sponsor in the system"""
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='sponsor_profiles', limit_choices_to={'role': 'sponsor'})
     phone_number = models.CharField(max_length=15)
     organization = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.organization}"
+        return f"{self.profile.user.get_full_name()} - {self.organization}"
 
 class Sponsorship(models.Model):
     STATUS_CHOICES = (
@@ -32,7 +48,7 @@ class Sponsorship(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     def __str__(self):
-        return f"{self.title} - {self.farmer.user.username}"
+        return f"{self.title} - {self.farmer.profile.user.username}"
 
 class SponsorshipMilestone(models.Model):
     STATUS_CHOICES = (
@@ -78,7 +94,7 @@ class SponsorshipPayment(models.Model):
     
 class Farmer(models.Model):
     """Model representing a farmer in the system"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='farmer_profile')
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='farmer_profiles', limit_choices_to={'role': 'farmer'})
     phone_number = models.CharField(max_length=15)
     location = models.CharField(max_length=100)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
@@ -87,7 +103,7 @@ class Farmer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.location}"
+        return f"{self.profile.user.get_full_name()} - {self.location}"
     
     def update_rating(self, new_rating):
         """Update the farmer's rating with a new rating value"""
@@ -101,14 +117,14 @@ class Farmer(models.Model):
 
 class Buyer(models.Model):
     """Model representing a buyer in the system"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='buyer_profile')
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='buyer_profiles', limit_choices_to={'role': 'buyer'})
     phone_number = models.CharField(max_length=15)
     location = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.location}"
+        return f"{self.profile.user.get_full_name()} - {self.location}"
 
 class ProduceCategory(models.Model):
     """Model representing categories of agricultural produce"""
