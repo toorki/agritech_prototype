@@ -12,6 +12,10 @@ from .serializers import (
     ProduceSerializer, OrderSerializer, RatingSerializer,
     SponsorshipSerializer, SponsorshipMilestoneSerializer, SponsorshipPaymentSerializer
 )
+import logging  # Added for debugging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class SponsorshipViewSet(viewsets.ModelViewSet):
     queryset = Sponsorship.objects.all()
@@ -108,7 +112,7 @@ def sponsorship_detail(request, sponsorship_id):
 def create_sponsorship(request):
     """Create a new sponsorship request (for farmers)"""
     if not hasattr(request.user, 'farmer_profile'):
-        return redirect('marketplace_home')
+        return redirect('marketplace:marketplace_home')
     
     if request.method == 'POST':
         # Process form data
@@ -143,7 +147,7 @@ def create_sponsorship(request):
                 status='pending'
             )
         
-        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     
     return render(request, 'marketplace/create_sponsorship.html')
 
@@ -166,7 +170,7 @@ def sponsor_project(request, sponsorship_id):
             transaction_id=request.POST.get('transaction_id', '')
         )
         
-        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     
     return render(request, 'marketplace/sponsor_project.html', {'sponsorship': sponsorship})
 
@@ -176,7 +180,7 @@ def update_milestone(request, milestone_id):
     milestone = get_object_or_404(SponsorshipMilestone, id=milestone_id)
     
     if not request.user.is_staff:
-        return redirect('sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
     
     if request.method == 'POST':
         status = request.POST.get('status')
@@ -189,7 +193,7 @@ def update_milestone(request, milestone_id):
             milestone.verification_notes = notes
             milestone.save()
         
-        return redirect('sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=milestone.sponsorship.id)
     
     return render(request, 'marketplace/update_milestone.html', {'milestone': milestone})
 
@@ -199,7 +203,7 @@ def complete_sponsorship(request, sponsorship_id):
     sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id, status='active')
     
     if not request.user.is_staff:
-        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     
     if request.method == 'POST':
         actual_yield = request.POST.get('actual_yield')
@@ -232,7 +236,7 @@ def complete_sponsorship(request, sponsorship_id):
             sponsorship.status = 'completed'
             sponsorship.save()
         
-        return redirect('sponsorship_detail', sponsorship_id=sponsorship.id)
+        return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     
     return render(request, 'marketplace/complete_sponsorship.html', {'sponsorship': sponsorship})
 
@@ -305,30 +309,6 @@ def farmer_list(request):
     farmers = Farmer.objects.all().order_by('-rating')
     context = {'farmers': farmers}
     return render(request, 'marketplace/farmer_list.html', context)
-
-def sponsorship_detail(request, sponsorship_id):
-    sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id)
-    milestones = SponsorshipMilestone.objects.filter(sponsorship=sponsorship)
-    
-    total_count = milestones.count()
-    completed_count = milestones.filter(status='completed').count()
-    
-    # Calculate a fixed width for the progress bar
-    if total_count == 0:
-        progress_width = "0%"
-    else:
-        # Calculate percentage and convert to string with % symbol
-        progress_width = f"{int((completed_count / total_count) * 100)}%"
-    
-    context = {
-        'sponsorship': sponsorship,
-        'milestones': milestones,
-        'total_count': total_count,
-        'completed_count': completed_count,
-        'progress_width': progress_width,  # Pass the pre-formatted width
-    }
-    
-    return render(request, 'marketplace/sponsorship_detail.html', context)
 
 def farmer_detail(request, farmer_id):
     """Detail view for a specific farmer"""
@@ -405,7 +385,7 @@ def order_detail(request, order_id):
     elif hasattr(user, 'farmer_profile'):
         order = get_object_or_404(Order, id=order_id, produce__farmer=user.farmer_profile)
     else:
-        return redirect('marketplace_home')
+        return redirect('marketplace:marketplace_home')
     
     context = {'order': order}
     return render(request, 'marketplace/order_detail.html', context)
@@ -433,7 +413,7 @@ def user_profile(request):
             'profile_type': 'farmer',
         }
     else:
-        return redirect('marketplace_home')
+        return redirect('marketplace:marketplace_home')
     
     return render(request, 'marketplace/user_profile.html', context)
 

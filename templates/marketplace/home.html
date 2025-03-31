@@ -14,7 +14,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ category.name }}</h5>
-                            <a href="{% url 'produce_list' %}?category={{ category.id }}" class="btn btn-primary">Browse</a>
+                            <a href="{% url 'marketplace:produce_list' %}?category={{ category.id }}" class="btn btn-primary">Browse</a>
                         </div>
                     </div>
                 </div>
@@ -33,8 +33,8 @@
                         {% endif %}
                         <div class="card-body">
                             <h5 class="card-title">{{ produce.name }}</h5>
-                            <p class="card-text">{{ produce.price }} per {{ produce.unit }}</p>
-                            <a href="{% url 'produce_detail' produce.id %}" class="btn btn-primary">View Details</a>
+                            <p class="card-text">{{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                            <a href="{% url 'marketplace:produce_detail' produce.id %}" class="btn btn-primary">View Details</a>
                         </div>
                     </div>
                 </div>
