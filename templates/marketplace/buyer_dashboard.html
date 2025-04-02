@@ -3,17 +3,96 @@
 {% block title %}Buyer Dashboard{% endblock %}
 
 {% block content %}
-<h1>Buyer Dashboard</h1>
-<h2>Welcome, {{ buyer.user.username }}</h2>
+<style>
+    .dashboard-container h1 {
+        color: #616161; /* Charcoal gray */
+    }
+    .dashboard-container h2, .dashboard-container h3 {
+        color: #0D47A1; /* Darker, authoritative blue */
+    }
+    .dashboard-container .btn-primary {
+        background-color: #66BB6A; /* Soft green for highlights */
+        border-color: #66BB6A;
+    }
+    .dashboard-container .btn-primary:hover {
+        background-color: #2E7D32; /* Deep green */
+        border-color: #2E7D32;
+    }
+    .dashboard-container ul {
+        background-color: #BDBDBD; /* Light gray */
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .dashboard-container li a {
+        color: #1E88E5; /* Professional blue */
+    }
+    .dashboard-container li a:hover {
+        color: #0D47A1; /* Darker, authoritative blue */
+    }
+    .dashboard-container .form-control {
+        background-color: #BDBDBD; /* Light gray */
+        border-color: #616161; /* Charcoal gray */
+    }
+    .dashboard-container .btn {
+        background-color: #1E88E5; /* Professional blue */
+        border-color: #1E88E5;
+    }
+    .dashboard-container .btn:hover {
+        background-color: #0D47A1; /* Darker, authoritative blue */
+        border-color: #0D47A1;
+    }
+</style>
 
-<h3>Your Orders</h3>
-{% if orders %}
-    <ul>
-   ="{% for order in orders %}
-        <li>Order #{{ order.id }} - {{ order.quantity }} {{ order.produce.unit }} of {{ order.produce.name }}</li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No orders yet.</p>
-{% endif %}
+<div class="dashboard-container">
+    <h1>Buyer Dashboard</h1>
+    <h2>Welcome, {{ buyer.profile.user.username }}</h2>
+
+    <!-- Active Orders -->
+    <h3>Your Active Orders</h3>
+    {% if active_orders %}
+        <ul>
+        {% for order in active_orders %}
+            <li>
+                Order #{{ order.id }} - 
+                {{ order.quantity }} {{ order.produce.unit }} of {{ order.produce.title }} - 
+                Status: {{ order.status }} - 
+                <a href="{% url 'marketplace:order_detail' order.id %}">Details</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no active orders.</p>
+    {% endif %}
+
+    <!-- Farmer List with Filters -->
+    <h3>Farmers</h3>
+    <form method="get" class="mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="location" class="form-label">Filter by Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ location_filter }}">
+            </div>
+            <div class="col-md-4">
+                <label for="crop" class="form-label">Filter by Crop</label>
+                <input type="text" class="form-control" id="crop" name="crop" value="{{ crop_filter }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+        </div>
+    </form>
+    {% if farmers %}
+        <ul>
+        {% for farmer in farmers %}
+            <li>
+                {{ farmer.profile.user.username }} - 
+                Location: {{ farmer.location }} - 
+                Crops: {% for crop in farmer.produce.all %}{{ crop.title }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No farmers match your filters.</p>
+    {% endif %}
+</div>
 {% endblock %}

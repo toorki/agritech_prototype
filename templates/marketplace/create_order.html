@@ -3,7 +3,52 @@
 {% block title %}AgriTech - Create Order{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<style>
+    .order-container .card-header {
+        background-color: #1E88E5; /* Professional blue */
+        color: #ffffff;
+    }
+    .order-container h2, .order-container h4, .order-container h5 {
+        color: #616161; /* Charcoal gray */
+    }
+    .order-container .badge {
+        background-color: #66BB6A; /* Soft green for highlights */
+    }
+    .order-container .text-muted {
+        color: #616161; /* Charcoal gray */
+    }
+    .order-container .form-label {
+        color: #0D47A1; /* Darker, authoritative blue */
+    }
+    .order-container .form-control {
+        background-color: #BDBDBD; /* Light gray */
+        border-color: #616161; /* Charcoal gray */
+    }
+    .order-container .btn-primary {
+        background-color: #66BB6A; /* Soft green for highlights */
+        border-color: #66BB6A;
+    }
+    .order-container .btn-primary:hover {
+        background-color: #2E7D32; /* Deep green */
+        border-color: #2E7D32;
+    }
+    .order-container .btn-outline-secondary {
+        color: #616161; /* Charcoal gray */
+        border-color: #616161;
+    }
+    .order-container .btn-outline-secondary:hover {
+        background-color: #BDBDBD; /* Light gray */
+        border-color: #BDBDBD;
+    }
+    .order-container .alert {
+        background-color: #e0f2f1; /* Light green-gray derived from #66BB6A */
+    }
+    .order-container .bg-light {
+        background-color: #e0f2f1; /* Light green-gray for summary */
+    }
+</style>
+
+<div class="order-container">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -134,7 +179,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -167,4 +211,5 @@
         }
     });
 </script>
+{% endblock %}
 {% endblock %}

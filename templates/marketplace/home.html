@@ -1,53 +1,94 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Marketplace Home{% endblock %}
+{% block title %}AgriTech Marketplace{% endblock %}
 
 {% block content %}
-    <h1>Welcome to the Marketplace</h1>
-    <p>This is where farmers and buyers connect.</p>
-    
-    {% if categories %}
-        <h2>Browse by Category</h2>
-        <div class="row">
-            {% for category in categories %}
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ category.name }}</h5>
-                            <a href="{% url 'marketplace:produce_list' %}?category={{ category.id }}" class="btn btn-primary">Browse</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    
-    {% if featured_produce %}
-        <h2>Featured Products</h2>
-        <div class="row">
-            {% for produce in featured_produce %}
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        {% if produce.image %}
-                            <img src="{{ produce.image.url }}" class="card-img-top" alt="{{ produce.name }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ produce.name }}</h5>
-                            <p class="card-text">{{ produce.price_per_unit }} per {{ produce.unit }}</p>
-                            <a href="{% url 'marketplace:produce_detail' produce.id %}" class="btn btn-primary">View Details</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+<style>
+    .home-container h1 {
+        color: #8B4513; /* Rich brown for farmer theme */
+    }
+    .home-container h2 {
+        color: #4CAF50; /* Vibrant green */
+    }
+    .home-container .btn-primary {
+        background-color: #FFCA28; /* Warm yellow */
+        border-color: #FFCA28;
+    }
+    .home-container .btn-primary:hover {
+        background-color: #f4b800; /* Lighter yellow */
+        border-color: #f4b800;
+    }
+    .home-container .list-group-item {
+        background-color: #D2B48C; /* Light tan */
+        border-color: #8B4513; /* Rich brown */
+    }
+</style>
 
-    <!-- New Role-Specific Login Buttons -->
-    <h2>Log In</h2>
-    <div class="btn-group" role="group">
-        <a href="{% url 'marketplace:login_farmer' %}" class="btn btn-success">Farmer</a>
-        <a href="{% url 'marketplace:login_sponsor' %}" class="btn btn-warning">Sponsor</a>
-        <a href="{% url 'marketplace:login_buyer' %}" class="btn btn-info">Buyer</a>
-    </div>
-    <p>Don't have an account? <a href="{% url 'marketplace:marketplace_home' %}#register">Register here</a>.</p>
+<div class="home-container">
+    {% if user.is_authenticated and user.userprofile.role == 'farmer' %}
+        <h1>Welcome to Your Marketplace, {{ user.username }}!</h1>
+        
+        <!-- Add New Produce Button -->
+        <div class="mb-4 text-center">
+            <a href="{% url 'marketplace:add_produce' %}" class="btn btn-primary">Add New Produce</a>
+        </div>
+
+        <!-- List of Your Crops -->
+        <h2>Your Crops</h2>
+        {% if crops %}
+            <ul class="list-group">
+                {% for crop in crops %}
+                    <li class="list-group-item">{{ crop.title }} - {{ crop.quantity }} {{ crop.unit }} ({{ crop.location }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>You have no crops listed. Add some using the button above!</p>
+        {% endif %}
+
+        <!-- List of Buyers -->
+        <h2>Buyers</h2>
+        {% if buyers %}
+            <ul class="list-group">
+                {% for buyer in buyers %}
+                    <li class="list-group-item">{{ buyer.profile.user.username }} - {{ buyer.location }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No buyers available at this time.</p>
+        {% endif %}
+
+        <!-- List of Farmers -->
+        <h2>Farmers</h2>
+        {% if farmers %}
+            <ul class="list-group">
+                {% for farmer in farmers %}
+                    <li class="list-group-item">{{ farmer.profile.user.username }} - {{ farmer.location }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No other farmers available at this time.</p>
+        {% endif %}
+    {% else %}
+        <h1>Welcome to AgriTech Marketplace</h1>
+        <p>Connecting farmers, sponsors, and buyers.</p>
+
+        <div class="row">
+            <div class="col-md-4">
+                <h2>Farmers</h2>
+                <p>List your produce and seek sponsorships.</p>
+                <a href="{% url 'marketplace:login_farmer' %}" class="btn btn-primary">Farmer Login</a>
+            </div>
+            <div class="col-md-4">
+                <h2>Sponsors</h2>
+                <p>Invest in farming projects.</p>
+                <a href="{% url 'marketplace:login_sponsor' %}" class="btn btn-primary">Sponsor Login</a>
+            </div>
+            <div class="col-md-4">
+                <h2>Buyers</h2>
+                <p>Purchase fresh produce directly.</p>
+                <a href="{% url 'marketplace:login_buyer' %}" class="btn btn-primary">Buyer Login</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,10 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Marketplace Home</title>
-</head>
-<body>
-    <h1>Welcome to the Marketplace</h1>
-    <p>This is a simple test page.</p>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<h1>My Profile</h1>
+<p>Role: {{ profile_type }}</p>
+
+{% if profile_type == 'farmer' %}
+    <h2>Crops</h2>
+    {% if produce_items %}
+        {% for item in produce_items %}
+            <p>{{ item.name }} - {{ item.quantity }} {{ item.unit }} at {{ item.price_per_unit }} per unit</p>
+        {% endfor %}
+    {% else %}
+        <p>No crops listed yet.</p>
+    {% endif %}
+{% elif profile_type == 'sponsor' %}
+    <h2>Sponsor Profile</h2>
+    <p><strong>Username:</strong> {{ profile.profile.user.username }}</p>
+    <p><strong>Name:</strong> {{ profile.profile.user.first_name }} {{ profile.profile.user.last_name }}</p>
+    <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
+    <p><strong>Organization:</strong> {{ profile.organization }}</p>
+{% elif profile_type == 'buyer' %}
+    <h2>Buyer Profile</h2>
+    <p><strong>Username:</strong> {{ profile.profile.user.username }}</p>
+    <p><strong>Name:</strong> {{ profile.profile.user.first_name }} {{ profile.profile.user.last_name }}</p>
+    <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
+    <p><strong>Location:</strong> {{ profile.location }}</p>
+{% endif %}
+
+<h2>Orders</h2>
+{% if orders %}
+    {% for order in orders %}
+        <p>Order #{{ order.id }} - Status: {{ order.status }}</p>
+    {% endfor %}
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+{% endblock %}

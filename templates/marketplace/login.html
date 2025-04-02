@@ -3,25 +3,60 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-{% endif %}
-{% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
-{% endif %}
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" class="form-control" id="username" name="username" required>
-    </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
+<style>
+    .login-container h2 {
+        color: #8B4513; /* Rich brown for farmer theme */
+    }
+    .login-container .form-label {
+        color: #4CAF50; /* Vibrant green */
+    }
+    .login-container .form-control {
+        background-color: #D2B48C; /* Light tan */
+        border-color: #8B4513; /* Rich brown */
+    }
+    .login-container .btn-primary {
+        background-color: #FFCA28; /* Warm yellow */
+        border-color: #FFCA28;
+    }
+    .login-container .btn-primary:hover {
+        background-color: #f4b800; /* Lighter yellow */
+        border-color: #f4b800;
+    }
+    .login-container .alert {
+        background-color: #e6f4ea; /* Light green derived from #8BC34A */
+    }
+</style>
+
+<div class="login-container">
+    <h2>Login</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+
+    <!-- Role-specific registration link -->
+    {% if request.path == '/marketplace/login/farmer/' %}
+        <p>Don't have an account? <a href="{% url 'marketplace:register_farmer' %}">Register here</a>.</p>
+    {% elif request.path == '/marketplace/login/sponsor/' %}
+        <p>Don't have an account? <a href="{% url 'marketplace:register_sponsor' %}">Register here</a>.</p>
+    {% elif request.path == '/marketplace/login/buyer/' %}
+        <p>Don't have an account? <a href="{% url 'marketplace:register_buyer' %}">Register here</a>.</p>
+    {% endif %}
+</div>
 {% endblock %}

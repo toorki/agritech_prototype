@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Sponsorship - AgriTech{% endblock %}
+
+{% block content %}
+<style>
+    .sponsorship-container h1 {
+        color: #757575; /* Medium gray */
+    }
+    .sponsorship-container h2, .sponsorship-container h3 {
+        color: #1976D2; /* Deeper blue */
+    }
+    .sponsorship-container .btn-primary {
+        background-color: #FFD700; /* Classic gold */
+        border-color: #FFD700;
+    }
+    .sponsorship-container .btn-primary:hover {
+        background-color: #F4A460; /* Warm gold */
+        border-color: #F4A460;
+    }
+    .sponsorship-container ul {
+        background-color: #B0BEC5; /* Light gray */
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .sponsorship-container li a {
+        color: #2196F3; /* Bright blue */
+    }
+    .sponsorship-container li a:hover {
+        color: #1976D2; /* Deeper blue */
+    }
+</style>
+
+<div class="sponsorship-container">
+    <h1>Sponsorship</h1>
+    <h2>Welcome, {{ sponsor.profile.user.username }}!</h2>
+
+    <!-- Create Sponsorship Proposal Button -->
+    <div class="mb-3">
+        <a href="{% url 'marketplace:create_sponsorship_proposal' %}" class="btn btn-primary">Create Sponsorship Proposal</a>
+    </div>
+
+    <!-- Your Active Sponsorships -->
+    <h3>Your Active Sponsorships</h3>
+    {% if active_sponsorships %}
+        <ul>
+        {% for sponsorship in active_sponsorships %}
+            <li>
+                {{ sponsorship.title }} - 
+                Farmer: {{ sponsorship.farmer.profile.user.username }} - 
+                Amount: ${{ sponsorship.amount_requested }} - 
+                <a href="{% url 'marketplace:sponsorship_detail' sponsorship.id %}">Details</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no active sponsorships.</p>
+    {% endif %}
+</div>
+{% endblock %}

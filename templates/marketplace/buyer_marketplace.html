@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Buyer Marketplace{% endblock %}
+
+{% block content %}
+<h1>Buyer Marketplace</h1>
+
+<!-- Filters -->
+<div class="mb-3">
+    <form method="get">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="location" class="form-label">Filter by Location:</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ location_filter }}">
+            </div>
+            <div class="col-md-4">
+                <label for="crop" class="form-label">Filter by Crop:</label>
+                <input type="text" class="form-control" id="crop" name="crop" value="{{ crop_filter }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Featured Produce -->
+<h2>Featured Produce</h2>
+{% if featured_produce %}
+    <div class="row">
+        {% for produce in featured_produce %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ produce.name }}</h5>
+                        <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
+                        <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                        <p class="card-text">Quantity: {{ produce.quantity }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No featured produce available.</p>
+{% endif %}
+
+<!-- Filtered Produce Items -->
+<h2>Available Produce</h2>
+{% if produce_items %}
+    <div class="row">
+        {% for produce in produce_items %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ produce.name }}</h5>
+                        <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
+                        <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                        <p class="card-text">Quantity: {{ produce.quantity }}</p>
+                        <p class="card-text">Location: {{ produce.location }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No produce matches your filters.</p>
+{% endif %}
+
+<!-- Most Rated Farmers -->
+<h2>Most Rated Farmers</h2>
+{% if top_farmers %}
+    <ul>
+        {% for farmer in top_farmers %}
+            <li>{{ farmer.profile.user.username }} - Rating: {{ farmer.rating }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No rated farmers available.</p>
+{% endif %}
+{% endblock %}

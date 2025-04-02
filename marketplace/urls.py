@@ -1,12 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from agritech.views import CustomLoginView  # Import CustomLoginView
+from agritech.views import CustomLoginView
 
-# Define the app namespace
 app_name = 'marketplace'
 
-# Set up the DRF router for API endpoints
 router = DefaultRouter()
 router.register(r'farmers', views.FarmerViewSet)
 router.register(r'buyers', views.BuyerViewSet)
@@ -18,12 +16,8 @@ router.register(r'sponsorships', views.SponsorshipViewSet)
 router.register(r'sponsorship-milestones', views.SponsorshipMilestoneViewSet)
 router.register(r'sponsorship-payments', views.SponsorshipPaymentViewSet)
 
-# Define URL patterns
 urlpatterns = [
-    # API endpoints
     path('api/', include(router.urls)),
-    
-    # Web UI endpoints
     path('', views.marketplace_home, name='marketplace_home'),
     path('farmers/', views.farmer_list, name='farmer_list'),
     path('farmers/<int:farmer_id>/', views.farmer_detail, name='farmer_detail'),
@@ -32,25 +26,24 @@ urlpatterns = [
     path('orders/', views.order_list, name='order_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
     path('profile/', views.user_profile, name='user_profile'),
-    
-    # Sponsorship endpoints
     path('sponsorships/', views.sponsorship_list, name='sponsorship_list'),
     path('sponsorships/<int:sponsorship_id>/', views.sponsorship_detail, name='sponsorship_detail'),
     path('sponsorships/create/', views.create_sponsorship, name='create_sponsorship'),
+    path('sponsorships/create-proposal/', views.create_sponsorship_proposal, name='create_sponsorship_proposal'),
     path('sponsorships/<int:sponsorship_id>/sponsor/', views.sponsor_project, name='sponsor_project'),
     path('milestones/<int:milestone_id>/update/', views.update_milestone, name='update_milestone'),
     path('sponsorships/<int:sponsorship_id>/complete/', views.complete_sponsorship, name='complete_sponsorship'),
-    
-    # Authentication endpoints
     path('login/farmer/', CustomLoginView.as_view(), name='login_farmer'),
     path('login/sponsor/', CustomLoginView.as_view(), name='login_sponsor'),
     path('login/buyer/', CustomLoginView.as_view(), name='login_buyer'),
-    path('login/', CustomLoginView.as_view(), name='login'),  # Keep the general login for now
     path('logout/', views.logout_view, name='logout'),
-    
-    # Dashboard endpoints
+    path('register/farmer/', views.register_farmer, name='register_farmer'),
+    path('register/sponsor/', views.register_sponsor, name='register_sponsor'),
+    path('register/buyer/', views.register_buyer, name='register_buyer'),
     path('farmer/dashboard/', views.farmer_dashboard, name='farmer_dashboard'),
     path('farmer/add-produce/', views.add_produce, name='add_produce'),
     path('sponsor/dashboard/', views.sponsor_dashboard, name='sponsor_dashboard'),
     path('buyer/dashboard/', views.buyer_dashboard, name='buyer_dashboard'),
+    path('sponsorship/', views.sponsorship_view, name='sponsorship'),
+    path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),  # New URL pattern
 ]

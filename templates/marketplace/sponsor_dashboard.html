@@ -3,17 +3,101 @@
 {% block title %}Sponsor Dashboard{% endblock %}
 
 {% block content %}
-<h1>Sponsor Dashboard</h1>
-<h2>Welcome, {{ request.user.username }}</h2>
+<style>
+    .dashboard-container h1 {
+        color: #757575; /* Medium gray */
+    }
+    .dashboard-container h2, .dashboard-container h3 {
+        color: #1976D2; /* Deeper blue */
+    }
+    .dashboard-container .btn-primary {
+        background-color: #FFD700; /* Classic gold */
+        border-color: #FFD700;
+    }
+    .dashboard-container .btn-primary:hover {
+        background-color: #F4A460; /* Warm gold */
+        border-color: #F4A460;
+    }
+    .dashboard-container ul {
+        background-color: #B0BEC5; /* Light gray */
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .dashboard-container li a {
+        color: #2196F3; /* Bright blue */
+    }
+    .dashboard-container li a:hover {
+        color: #1976D2; /* Deeper blue */
+    }
+    .dashboard-container .form-control {
+        background-color: #B0BEC5; /* Light gray */
+        border-color: #757575; /* Medium gray */
+    }
+    .dashboard-container .btn {
+        background-color: #2196F3; /* Bright blue */
+        border-color: #2196F3;
+    }
+    .dashboard-container .btn:hover {
+        background-color: #1976D2; /* Deeper blue */
+        border-color: #1976D2;
+    }
+</style>
 
-<h3>Your Sponsorships</h3>
-{% if sponsorships %}
-    <ul>
-    {% for sponsorship in sponsorships %}
-        <li>{{ sponsorship.title }} - {{ sponsorship.status }}</li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No sponsorships yet.</p>
-{% endif %}
+<div class="dashboard-container">
+    <h1>Sponsor Dashboard</h1>
+    <h2>Welcome, {{ sponsor.profile.user.username }}</h2>
+
+    <!-- Create Sponsorship Proposal Button -->
+    <div class="mb-3">
+        <a href="{% url 'marketplace:create_sponsorship_proposal' %}" class="btn btn-primary">Create Sponsorship Proposal</a>
+    </div>
+
+    <!-- Your Active Sponsorships -->
+    <h3>Your Active Sponsorships</h3>
+    {% if active_sponsorships %}
+        <ul>
+        {% for sponsorship in active_sponsorships %}
+            <li>
+                {{ sponsorship.title }} - 
+                Farmer: {{ sponsorship.farmer.profile.user.username }} - 
+                Amount: ${{ sponsorship.amount_requested }} - 
+                <a href="{% url 'marketplace:sponsorship_detail' sponsorship.id %}">Details</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have no active sponsorships.</p>
+    {% endif %}
+
+    <!-- Farmer List with Filters -->
+    <h3>Farmers</h3>
+    <form method="get" class="mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="location" class="form-label">Filter by Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ location_filter }}">
+            </div>
+            <div class="col-md-4">
+                <label for="crop" class="form-label">Filter by Crop</label>
+                <input type="text" class="form-control" id="crop" name="crop" value="{{ crop_filter }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+        </div>
+    </form>
+    {% if farmers %}
+        <ul>
+        {% for farmer in farmers %}
+            <li>
+                {{ farmer.profile.user.username }} - 
+                Location: {{ farmer.location }} - 
+                Crops: {% for crop in farmer.produce.all %}{{ crop.title }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No farmers match your filters.</p>
+    {% endif %}
+</div>
 {% endblock %}

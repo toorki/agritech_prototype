@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2>Register</h2>
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <label for="role">Role:</label>
+    <select name="role" id="role" required>
+        <option value="buyer">Buyer</option>
+        <option value="farmer">Farmer</option>
+        <option value="sponsor">Sponsor</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Register</button>
+</form>
+<a href="{% url 'marketplace:login' %}">Already have an account? Login here.</a>
+{% endblock %}

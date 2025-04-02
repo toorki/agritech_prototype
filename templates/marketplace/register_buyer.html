@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Buyer{% endblock %}
+
+{% block content %}
+<style>
+    .register-container h2 {
+        color: #616161; /* Charcoal gray */
+    }
+    .register-container .form-label {
+        color: #0D47A1; /* Darker, authoritative blue */
+    }
+    .register-container .form-control {
+        background-color: #BDBDBD; /* Light gray */
+        border-color: #616161; /* Charcoal gray */
+    }
+    .register-container .btn-primary {
+        background-color: #66BB6A; /* Soft green for highlights */
+        border-color: #66BB6A;
+    }
+    .register-container .btn-primary:hover {
+        background-color: #2E7D32; /* Deep green */
+        border-color: #2E7D32;
+    }
+    .register-container .alert {
+        background-color: #e0f2f1; /* Light green-gray derived from #66BB6A */
+    }
+</style>
+
+<div class="register-container">
+    <h2>Register as Buyer</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="family_name" class="form-label">Family Name</label>
+            <input type="text" class="form-control" id="family_name" name="family_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">Phone Number (min 8 digits)</label>
+            <input type="text" class="form-control" id="phone" name="phone" pattern="[0-9]{8,}" required>
+        </div>
+        <div class="mb-3">
+            <label for="home_address" class="form-label">Home Address</label>
+            <input type="text" class="form-control" id="home_address" name="home_address" required>
+        </div>
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password1" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password1" name="password1" required>
+        </div>
+        <div class="mb-3">
+            <label for="password2" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="password2" name="password2" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+    <p>Already have an account? <a href="{% url 'marketplace:login_buyer' %}">Login here</a>.</p>
+</div>
+{% endblock %}
