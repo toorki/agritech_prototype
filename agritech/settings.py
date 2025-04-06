@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'your-secret-key-here'  # Replace with a secure random key in production
+SECRET_KEY = 'rS40M0Cpwp8a27e6NQyL5fxkh-6vPWG93JlTQjk3tHbBn_68DYMVyqmTdYYxPbn_N5M'  # Replace with a secure random key in production
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -77,7 +77,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'agritech_db',
         'USER': 'torki',
-        'PASSWORD': '1993laroussi',  # Use the password you set in the previous step
+        'PASSWORD': '1993laroussi',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -133,3 +133,11 @@ LOGGING = {
         },
     },
 }
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
