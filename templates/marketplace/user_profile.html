@@ -1,40 +1,150 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<h1>My Profile</h1>
-<p>Role: {{ profile_type }}</p>
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-{% if profile_type == 'farmer' %}
-    <h2>Crops</h2>
-    {% if produce_items %}
-        {% for item in produce_items %}
-            <p>{{ item.name }} - {{ item.quantity }} {{ item.unit }} at {{ item.price_per_unit }} per unit</p>
-        {% endfor %}
-    {% else %}
-        <p>No crops listed yet.</p>
+    .profile-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .profile-header h1 {
+        color: #4CAF50;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .profile-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        border-left: 5px solid #4CAF50;
+    }
+
+    .profile-section h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+    }
+
+    .profile-section p {
+        margin-bottom: 15px;
+        color: #444;
+        line-height: 1.6;
+    }
+
+    .profile-section strong {
+        color: #2E7D32;
+        margin-right: 10px;
+    }
+
+    .produce-item, .order-item {
+        background-color: #fff;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .produce-item:hover, .order-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .no-items {
+        color: #888;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .profile-container {
+            margin: 0 10px;
+            padding: 15px;
+        }
+
+        .profile-header h1 {
+            font-size: 2rem;
+        }
+
+        .profile-section h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>My Profile</h1>
+    </div>
+
+    <div class="profile-section">
+        <h2>Profile Details</h2>
+        <p><strong>Full Name:</strong> {{ profile.profile.user.get_full_name }}</p>
+        <p><strong>Profile Type:</strong> {{ profile_type|capfirst }}</p>
+        <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
+        <p><strong>Email Address:</strong> {{ profile.profile.user.email }}</p>
+        {% if profile_type == 'buyer' or profile_type == 'farmer' %}
+            <p><strong>Address:</strong> {{ profile.location }}</p>
+        {% elif profile_type == 'sponsor' %}
+            <p><strong>Address:</strong> {{ profile.organization }}</p>
+        {% endif %}
+    </div>
+
+    {% if profile_type == 'farmer' %}
+        <div class="profile-section">
+            <h2>My Crops</h2>
+            {% if produce_items %}
+                {% for item in produce_items %}
+                    <div class="produce-item">
+                        <p><strong>Name:</strong> {{ item.title }}</p>
+                        <p><strong>Quantity:</strong> {{ item.quantity }} {{ item.unit }}</p>
+                        <p><strong>Price:</strong> {{ item.price_per_unit }} TND per unit</p>
+                        <p><strong>Location:</strong> {{ item.location }}</p>
+                        <p><strong>Availability:</strong> {{ item.is_available|yesno:"Yes,No" }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-items">No crops listed yet.</p>
+            {% endif %}
+        </div>
     {% endif %}
-{% elif profile_type == 'sponsor' %}
-    <h2>Sponsor Profile</h2>
-    <p><strong>Username:</strong> {{ profile.profile.user.username }}</p>
-    <p><strong>Name:</strong> {{ profile.profile.user.first_name }} {{ profile.profile.user.last_name }}</p>
-    <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
-    <p><strong>Organization:</strong> {{ profile.organization }}</p>
-{% elif profile_type == 'buyer' %}
-    <h2>Buyer Profile</h2>
-    <p><strong>Username:</strong> {{ profile.profile.user.username }}</p>
-    <p><strong>Name:</strong> {{ profile.profile.user.first_name }} {{ profile.profile.user.last_name }}</p>
-    <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
-    <p><strong>Location:</strong> {{ profile.location }}</p>
-{% endif %}
 
-<h2>Orders</h2>
-{% if orders %}
-    {% for order in orders %}
-        <p>Order #{{ order.id }} - Status: {{ order.status }}</p>
-    {% endfor %}
-{% else %}
-    <p>No orders found.</p>
-{% endif %}
+    <div class="profile-section">
+        <h2>My Orders</h2>
+        {% if orders %}
+            {% for order in orders %}
+                <div class="order-item">
+                    <p><strong>Order #:</strong> {{ order.id }}</p>
+                    <p><strong>Status:</strong> {{ order.status }}</p>
+                    <p><strong>Produce:</strong> {{ order.produce.title }}</p>
+                    <p><strong>Quantity:</strong> {{ order.quantity }} {{ order.produce.unit }}</p>
+                    <p><strong>Total Amount:</strong> {{ order.total_amount }} TND</p>
+                    <p><strong>Delivery Location:</strong> {{ order.delivery_location }}</p>
+                    <p><strong>Created:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-items">No orders found.</p>
+        {% endif %}
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'marketplace:marketplace_home' %}" class="btn btn-primary">Back to Home</a>
+        <a href="{% url 'marketplace:user_profile_update' %}" class="btn btn-secondary">Edit Profile</a>
+    </div>
+</div>
 {% endblock %}

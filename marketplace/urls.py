@@ -5,7 +5,6 @@ from agritech.views import CustomLoginView, AddProduceView
 
 app_name = 'marketplace'  # Namespace for the app
 
-# DRF Router for API endpoints
 router = DefaultRouter()
 router.register(r'farmers', views.FarmerViewSet)
 router.register(r'buyers', views.BuyerViewSet)
@@ -18,8 +17,8 @@ router.register(r'sponsorship-milestones', views.SponsorshipMilestoneViewSet)
 router.register(r'sponsorship-payments', views.SponsorshipPaymentViewSet)
 
 urlpatterns = [
-    path('api/', include(router.urls)),  # API endpoints
-    path('', views.marketplace_home, name='marketplace_home'),  # Marketplace homepage
+    path('api/', include(router.urls)),
+    path('', views.marketplace_home, name='marketplace_home'),
     path('farmers/', views.farmer_list, name='farmer_list'),
     path('farmers/<int:farmer_id>/', views.farmer_detail, name='farmer_detail'),
     path('produce/', views.produce_list, name='produce_list'),
@@ -27,6 +26,7 @@ urlpatterns = [
     path('orders/', views.order_list, name='order_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
     path('profile/', views.user_profile, name='user_profile'),
+    path('profile/update/', views.user_profile_update, name='user_profile_update'),  
     path('sponsorships/', views.sponsorship_list, name='sponsorship_list'),
     path('sponsorships/<int:sponsorship_id>/', views.sponsorship_detail, name='sponsorship_detail'),
     path('sponsorships/create/', views.create_sponsorship, name='create_sponsorship'),

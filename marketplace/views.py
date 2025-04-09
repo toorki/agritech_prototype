@@ -216,22 +216,90 @@ def user_profile(request):
     user = request.user
     try:
         profile = UserProfile.objects.get(user=user)
+        logger.debug(f"User {user.username} accessed profile with role: {profile.role}")
+
         if profile.role == 'buyer':
             buyer = Buyer.objects.get(profile=profile)
-            orders = Order.objects.filter(buyer=buyer)
+            orders = Order.objects.filter(buyer=buyer).order_by('-created_at')
             context = {'profile': buyer, 'orders': orders, 'profile_type': 'buyer'}
         elif profile.role == 'farmer':
             farmer = Farmer.objects.get(profile=profile)
-            produce_items = Produce.objects.filter(farmer=farmer)
-            orders = Order.objects.filter(produce__farmer=farmer)
+            produce_items = Produce.objects.filter(farmer=farmer).order_by('-created_at')
+            orders = Order.objects.filter(produce__farmer=farmer).order_by('-created_at')
             context = {'profile': farmer, 'produce_items': produce_items, 'orders': orders, 'profile_type': 'farmer'}
         elif profile.role == 'sponsor':
             sponsor = Sponsor.objects.get(profile=profile)
             context = {'profile': sponsor, 'profile_type': 'sponsor'}
         else:
+            logger.warning(f"User {user.username} has an invalid role: {profile.role}")
+            messages.error(request, "Invalid user role.")
             return redirect('marketplace:marketplace_home')
+
         return render(request, 'marketplace/user_profile.html', context)
     except UserProfile.DoesNotExist:
+        logger.error(f"User {user.username} has no UserProfile.")
+        messages.error(request, "Profile not found. Please complete your registration.")
+        return redirect('marketplace:marketplace_home')
+    except (Buyer.DoesNotExist, Farmer.DoesNotExist, Sponsor.DoesNotExist) as e:
+        logger.error(f"Profile detail missing for user {user.username}: {str(e)}")
+        messages.error(request, "Profile details are incomplete.")
+        return redirect('marketplace:marketplace_home')
+
+@login_required
+def user_profile_update(request):
+    user = request.user
+    try:
+        profile = UserProfile.objects.get(user=user)
+        logger.debug(f"User {user.username} accessing profile update with role: {profile.role}")
+
+        if request.method == 'POST':
+            if profile.role == 'buyer':
+                buyer = Buyer.objects.get(profile=profile)
+                buyer.phone_number = request.POST.get('phone_number')
+                buyer.location = request.POST.get('location')
+                buyer.save()
+                messages.success(request, "Buyer profile updated successfully!")
+                return redirect('marketplace:user_profile')
+            elif profile.role == 'farmer':
+                farmer = Farmer.objects.get(profile=profile)
+                farmer.phone_number = request.POST.get('phone_number')
+                farmer.location = request.POST.get('location')
+                farmer.save()
+                messages.success(request, "Farmer profile updated successfully!")
+                return redirect('marketplace:user_profile')
+            elif profile.role == 'sponsor':
+                sponsor = Sponsor.objects.get(profile=profile)
+                sponsor.phone_number = request.POST.get('phone_number')
+                sponsor.organization = request.POST.get('organization')
+                sponsor.save()
+                messages.success(request, "Sponsor profile updated successfully!")
+                return redirect('marketplace:user_profile')
+            else:
+                logger.warning(f"User {user.username} has an invalid role: {profile.role}")
+                messages.error(request, "Invalid user role.")
+                return redirect('marketplace:marketplace_home')
+        
+        if profile.role == 'buyer':
+            profile_instance = Buyer.objects.get(profile=profile)
+        elif profile.role == 'farmer':
+            profile_instance = Farmer.objects.get(profile=profile)
+        elif profile.role == 'sponsor':
+            profile_instance = Sponsor.objects.get(profile=profile)
+        else:
+            return redirect('marketplace:marketplace_home')
+
+        context = {
+            'profile': profile_instance,
+            'profile_type': profile.role,
+        }
+        return render(request, 'marketplace/user_profile_update.html', context)
+    except UserProfile.DoesNotExist:
+        logger.error(f"User {user.username} has no UserProfile.")
+        messages.error(request, "Profile not found.")
+        return redirect('marketplace:marketplace_home')
+    except (Buyer.DoesNotExist, Farmer.DoesNotExist, Sponsor.DoesNotExist) as e:
+        logger.error(f"Profile detail missing for user {user.username}: {str(e)}")
+        messages.error(request, "Profile details are incomplete.")
         return redirect('marketplace:marketplace_home')
 
 @login_required
