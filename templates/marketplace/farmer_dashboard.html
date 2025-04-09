@@ -84,6 +84,21 @@
         background-color: #8BC34A; /* Soft green */
         border-color: #689F38;
     }
+    .notification-btn {
+        background-color: #FFCA28; /* Warm yellow */
+        border-color: #FFCA28;
+        padding: 5px 10px;
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+    .notification-btn:hover {
+        background-color: #f4b800; /* Lighter yellow */
+        border-color: #f4b800;
+    }
+    .badge {
+        font-size: 0.75rem;
+        background-color: #D32F2F; /* Red for unread */
+    }
     @media (max-width: 768px) {
         .dashboard-container {
             padding: 15px;
@@ -95,7 +110,7 @@
 </style>
 
 <div class="dashboard-container">
-    <h1>Welcome, {{ farmer.profile.user.username }}!</h1>
+    <h1>Welcome, {{ farmer.profile.user.get_full_name }}!</h1>
 
     <!-- Messages -->
     {% if messages %}
@@ -106,9 +121,20 @@
         {% endfor %}
     {% endif %}
 
-    <!-- Add Produce Button -->
+    <!-- Add Produce and Notification Buttons -->
     <div class="mb-4 text-center">
-        <a href="{% url 'marketplace:add_produce' %}" class="btn btn-primary add-produce-btn">Add New Produce</a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'marketplace:add_produce' %}" class="btn btn-primary add-produce-btn">Add New Produce</a>
+            <a href="{% url 'marketplace:notification_list' %}" class="btn btn-primary notification-btn position-relative">
+                Notifications
+                {% if unread_notifications_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ unread_notifications_count }}
+                        <span class="visually-hidden">unread notifications</span>
+                    </span>
+                {% endif %}
+            </a>
+        </div>
     </div>
 
     <!-- Crops Section -->

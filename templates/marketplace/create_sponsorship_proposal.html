@@ -69,7 +69,10 @@
             <input type="number" step="0.01" class="form-control" id="expected_yield" name="expected_yield" readonly>
             <small class="text-muted">Calculated as investment + 40% of estimated profit (2x investment assumed).</small>
         </div>
-        <!-- Removed expected_completion_date -->
+        <div class="mb-3">
+            <label for="expected_completion_date" class="form-label">Expected Completion Date</label>
+            <input type="date" class="form-control" id="expected_completion_date" name="expected_completion_date" required>
+        </div>
         <button type="submit" class="btn btn-primary">Create Proposal</button>
     </form>
 

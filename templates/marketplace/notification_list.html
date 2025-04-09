@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>Notifications</h1>
+    {% if notifications %}
+        {% for notification in notifications %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="card-text">{{ notification.message }}</p>
+                    <p class="text-muted">Received: {{ notification.created_at|date:"F j, Y H:i" }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No notifications available.</p>
+    {% endif %}
+    <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

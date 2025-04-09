@@ -144,3 +144,23 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'  # Replace with your Gmail
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your Gmail
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Replace with your 16-character App Password
+
+# SMS Configuration (Hypothetical; adjust based on sms_service)
+SMS_SERVICE_ENABLED = True
+SMS_TWILIO_ACCOUNT_SID = 'your_twilio_sid'  # Replace with your Twilio SID
+SMS_TWILIO_AUTH_TOKEN = 'your_twilio_auth_token'  # Replace with your Twilio auth token
+SMS_TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'  # Replace with your Twilio phone number
+
+# Security Settings
+SECURE_SSL_REDIRECT = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_SECURE = False  # Set to True in production

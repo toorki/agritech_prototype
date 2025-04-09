@@ -47,4 +47,5 @@ urlpatterns = [
     path('buyer/dashboard/', views.buyer_dashboard, name='buyer_dashboard'),
     path('sponsorship/', views.sponsorship_view, name='sponsorship'),
     path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),
+    path('notifications/', views.notification_list, name='notification_list'),
 ]

@@ -5,10 +5,12 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 from rest_framework import viewsets, permissions
 from .models import (
     Farmer, Buyer, ProduceCategory, Produce, Order, Rating,
-    Sponsorship, SponsorshipMilestone, SponsorshipPayment, UserProfile, Sponsor
+    Sponsorship, SponsorshipMilestone, SponsorshipPayment, UserProfile, Sponsor, Notification
 )
 from .serializers import (
     FarmerSerializer, BuyerSerializer, ProduceCategorySerializer,
@@ -17,6 +19,7 @@ from .serializers import (
 )
 import logging
 import re
+from sms_service.utils import send_sms  # Correct import if utils.py is in sms_service/
 
 logger = logging.getLogger(__name__)
 
@@ -313,12 +316,14 @@ def farmer_dashboard(request):
     crops = Produce.objects.filter(farmer=farmer, is_available=True)
     available_sponsorships = Sponsorship.objects.filter(status='pending', sponsor__isnull=True)
     orders = Order.objects.filter(produce__farmer=farmer, status__in=['pending', 'confirmed', 'paid'])
-    
+    unread_notifications_count = farmer.profile.user.notifications.filter(is_read=False).count()  # Precompute here
+
     context = {
         'farmer': farmer,
         'crops': crops,
         'available_sponsorships': available_sponsorships,
         'orders': orders,
+        'unread_notifications_count': unread_notifications_count,  # Add to context
     }
     return render(request, 'marketplace/farmer_dashboard.html', context)
 
@@ -484,12 +489,17 @@ def create_sponsorship_proposal(request):
         return redirect('marketplace:marketplace_home')
     
     if request.method == 'POST':
+        logger.debug("Processing POST request for sponsorship proposal")
         farmer_id = request.POST.get('farmer')
         title = request.POST.get('title')
         description = request.POST.get('description')
         amount_requested = request.POST.get('amount_requested')
         expected_yield = request.POST.get('expected_yield')
-        
+        expected_completion_date = request.POST.get('expected_completion_date')
+
+        logger.debug(f"Form data: farmer_id={farmer_id}, title={title}, description={description}, "
+                     f"amount={amount_requested}, yield={expected_yield}, date={expected_completion_date}")
+
         try:
             farmer = Farmer.objects.get(id=farmer_id)
             sponsorship = Sponsorship.objects.create(
@@ -499,13 +509,43 @@ def create_sponsorship_proposal(request):
                 description=description,
                 amount_requested=amount_requested,
                 expected_yield=expected_yield,
+                expected_completion_date=expected_completion_date,
                 status='pending'
             )
+            logger.debug(f"Sponsorship created with ID: {sponsorship.id}")
+
             messages.success(request, 'Sponsorship proposal created successfully!')
+
+            # Platform Notification
+            Notification.objects.create(
+                user=farmer.profile.user,
+                message=f"New sponsorship proposal '{title}' created by {sponsor.profile.user.get_full_name()}."
+            )
+            logger.debug(f"Platform notification created for user {farmer.profile.user.username}")
+            messages.info(request, f"Notification sent to {farmer.profile.user.get_full_name()} on platform.")
+
+            # Email Notification
+            subject = f"New Sponsorship Proposal: {title}"
+            message = f"Dear {farmer.profile.user.get_full_name()},\n\nA new sponsorship proposal has been created for you by {sponsor.profile.user.get_full_name()}.\nDetails:\n- Title: {title}\n- Amount Requested: {amount_requested} TND\n- Expected Yield: {expected_yield}\n- Expected Completion Date: {expected_completion_date}\n\nPlease log in to review and respond.\n\nBest,\nAgriTech Team"
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [farmer.profile.user.email]
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            logger.debug(f"Email sent to {farmer.profile.user.email}")
+
+            # SMS Notification
+            sms_message = f"New sponsorship proposal '{title}' from {sponsor.profile.user.get_full_name()}. Log in to review. AgriTech"
+            send_sms(farmer.phone_number, sms_message)
+            logger.debug(f"SMS sent to {farmer.phone_number}")
+
             return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
         except Farmer.DoesNotExist:
+            logger.error(f"Invalid farmer ID: {farmer_id}")
             messages.error(request, 'Invalid farmer selected.')
+        except ValueError as e:
+            logger.error(f"Value error creating sponsorship: {str(e)}")
+            messages.error(request, f"Invalid data provided: {str(e)}")
         except Exception as e:
+            logger.error(f"Unexpected error creating sponsorship: {str(e)}")
             messages.error(request, f'Error creating sponsorship: {str(e)}')
     
     farmers = Farmer.objects.all()
@@ -678,3 +718,14 @@ def sponsorship_view(request):
         'active_sponsorships': active_sponsorships,
     }
     return render(request, 'marketplace/sponsorship.html', context)
+
+@login_required
+def notification_list(request):
+    if request.user.userprofile.role != 'farmer':
+        return redirect('marketplace:marketplace_home')
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    for notification in notifications:
+        notification.is_read = True
+        notification.save()
+    context = {'notifications': notifications}
+    return render(request, 'marketplace/notification_list.html', context)
