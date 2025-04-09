@@ -6,8 +6,8 @@
 <div class="container py-5">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'marketplace_home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'produce_list' %}">Produce</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'marketplace:marketplace_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'marketplace:produce_list' %}">Produce</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ produce.title }}</li>
         </ol>
     </nav>
@@ -40,7 +40,7 @@
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span>Listed by</span>
-                                <a href="{% url 'farmer_detail' produce.farmer.id %}">{{ produce.farmer.user.get_full_name }}</a>
+                                <a href="{% url 'marketplace:farmer_detail' produce.farmer.id %}">{{ produce.farmer.user.get_full_name }}</a>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <span>Farmer Rating</span>
@@ -77,7 +77,7 @@
                 </div>
                 <div class="card-body">
                     {% if user.is_authenticated and user.buyer_profile %}
-                        <form method="post" action="{% url 'create_order' produce.id %}">
+                        <form method="post" action="{% url 'marketplace:create_order' produce.id %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="quantity" class="form-label">Quantity ({{ produce.unit }})</label>
@@ -128,7 +128,7 @@
                         </div>
                     {% else %}
                         <div class="alert alert-warning">
-                            <p>Please <a href="{% url 'login' %}">log in</a> or <a href="{% url 'register' %}">register</a> as a buyer to place an order.</p>
+                            <p>Please <a href="{% url 'marketplace:login_farmer' %}">log in</a> or <a href="{% url 'marketplace:register_buyer' %}">register</a> as a buyer to place an order.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -144,7 +144,7 @@
                     <p><i class="bi bi-geo-alt"></i> {{ produce.farmer.location }}</p>
                     <p><i class="bi bi-telephone"></i> Contact via platform messaging</p>
                     <div class="d-grid">
-                        <a href="{% url 'farmer_detail' produce.farmer.id %}" class="btn btn-outline-success">
+                        <a href="{% url 'marketplace:farmer_detail' produce.farmer.id %}" class="btn btn-outline-success">
                             <i class="bi bi-person"></i> View Farmer Profile
                         </a>
                     </div>
@@ -167,7 +167,7 @@
                                 <p class="produce-price">{{ item.price_per_unit }} TND/{{ item.unit }}</p>
                             </div>
                             <div class="card-footer">
-                                <a href="{% url 'produce_detail' item.id %}" class="btn btn-sm btn-primary w-100">View Details</a>
+                                <a href="{% url 'marketplace:produce_detail' item.id %}" class="btn btn-sm btn-primary w-100">View Details</a>
                             </div>
                         </div>
                     </div>

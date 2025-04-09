@@ -3,8 +3,9 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from agritech.views import CustomLoginView, AddProduceView
 
-app_name = 'marketplace'
+app_name = 'marketplace'  # Namespace for the app
 
+# DRF Router for API endpoints
 router = DefaultRouter()
 router.register(r'farmers', views.FarmerViewSet)
 router.register(r'buyers', views.BuyerViewSet)
@@ -17,8 +18,8 @@ router.register(r'sponsorship-milestones', views.SponsorshipMilestoneViewSet)
 router.register(r'sponsorship-payments', views.SponsorshipPaymentViewSet)
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('', views.marketplace_home, name='marketplace_home'),
+    path('api/', include(router.urls)),  # API endpoints
+    path('', views.marketplace_home, name='marketplace_home'),  # Marketplace homepage
     path('farmers/', views.farmer_list, name='farmer_list'),
     path('farmers/<int:farmer_id>/', views.farmer_detail, name='farmer_detail'),
     path('produce/', views.produce_list, name='produce_list'),
