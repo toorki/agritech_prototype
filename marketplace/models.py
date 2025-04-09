@@ -4,7 +4,6 @@ from django.core.validators import MinValueValidator
 from django.utils import timezone
 
 class UserProfile(models.Model):
-    """Model to enforce a single role per user"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     ROLE_CHOICES = (
         ('farmer', 'Farmer'),
@@ -19,7 +18,6 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.role}"
 
 class Sponsor(models.Model):
-    """Model representing a sponsor in the system"""
     profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='sponsor_profiles', limit_choices_to={'role': 'sponsor'})
     phone_number = models.CharField(max_length=15)
     organization = models.CharField(max_length=100)
@@ -91,9 +89,8 @@ class SponsorshipPayment(models.Model):
     
     def __str__(self):
         return f"{self.payment_type} - {self.amount} - {self.sponsorship.title}"
-    
+
 class Farmer(models.Model):
-    """Model representing a farmer in the system"""
     profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='farmer_profiles', limit_choices_to={'role': 'farmer'})
     phone_number = models.CharField(max_length=15)
     location = models.CharField(max_length=100)
@@ -106,17 +103,14 @@ class Farmer(models.Model):
         return f"{self.profile.user.get_full_name()} - {self.location}"
     
     def update_rating(self, new_rating):
-        """Update the farmer's rating with a new rating value"""
         if self.total_ratings == 0:
             self.rating = new_rating
         else:
-            # Calculate weighted average
             self.rating = ((self.rating * self.total_ratings) + new_rating) / (self.total_ratings + 1)
         self.total_ratings += 1
         self.save()
 
 class Buyer(models.Model):
-    """Model representing a buyer in the system"""
     profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='buyer_profiles', limit_choices_to={'role': 'buyer'})
     phone_number = models.CharField(max_length=15)
     location = models.CharField(max_length=100)
@@ -127,7 +121,6 @@ class Buyer(models.Model):
         return f"{self.profile.user.get_full_name()} - {self.location}"
 
 class ProduceCategory(models.Model):
-    """Model representing categories of agricultural produce"""
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     
@@ -138,7 +131,6 @@ class ProduceCategory(models.Model):
         verbose_name_plural = "Produce Categories"
 
 class Produce(models.Model):
-    """Model representing agricultural produce listings"""
     UNIT_CHOICES = [
         ('kg', 'Kilograms'),
         ('g', 'Grams'),
@@ -164,11 +156,9 @@ class Produce(models.Model):
     
     @property
     def total_price(self):
-        """Calculate the total price of the produce listing"""
         return self.quantity * self.price_per_unit
 
 class Order(models.Model):
-    """Model representing orders placed by buyers"""
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
@@ -181,9 +171,9 @@ class Order(models.Model):
     buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, related_name='orders')
     produce = models.ForeignKey(Produce, on_delete=models.CASCADE, related_name='orders')
     quantity = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of order
-    platform_fee = models.DecimalField(max_digits=10, decimal_places=2)  # 2% fee
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)  # Total including fee
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    platform_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     delivery_location = models.CharField(max_length=100)
     delivery_notes = models.TextField(blank=True)
@@ -194,20 +184,18 @@ class Order(models.Model):
         return f"Order #{self.id} - {self.buyer} - {self.status}"
     
     def save(self, *args, **kwargs):
-        # Calculate platform fee (2%) and total amount if not already set
-        if not self.pk:  # Only on creation
+        if not self.pk:
             self.unit_price = self.produce.price_per_unit
             subtotal = self.quantity * self.unit_price
-            self.platform_fee = subtotal * 0.02  # 2% fee
+            self.platform_fee = subtotal * 0.02
             self.total_amount = subtotal + self.platform_fee
         super().save(*args, **kwargs)
 
 class Rating(models.Model):
-    """Model representing ratings given by buyers to farmers"""
     buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, related_name='ratings_given')
     farmer = models.ForeignKey(Farmer, on_delete=models.CASCADE, related_name='ratings_received')
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='rating')
-    score = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])  # 1-5 rating
+    score = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -215,7 +203,6 @@ class Rating(models.Model):
         return f"{self.buyer} rated {self.farmer}: {self.score}/5"
     
     def save(self, *args, **kwargs):
-        # Update farmer's rating when a new rating is created
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new:

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Required for Django REST Framework
     'marketplace',
     'sms_service',  # Assuming this is another app in your project
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

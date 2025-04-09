@@ -1,29 +1,100 @@
 {% extends 'base.html' %}
 
+{% load widget_tweaks %}
+
 {% block title %}Add New Produce{% endblock %}
 
 {% block content %}
 <style>
+    .add-produce-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
     .add-produce-container h1 {
         color: #8B4513; /* Rich brown */
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 2.5rem;
     }
+
     .add-produce-container .form-label {
         color: #4CAF50; /* Vibrant green */
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
     }
-    .add-produce-container .form-control, .add-produce-container .form-select {
+
+    .add-produce-container .form-control,
+    .add-produce-container .form-select {
         background-color: #D2B48C; /* Light tan */
-        border-color: #8B4513; /* Rich brown */
+        border: 2px solid #8B4513; /* Rich brown */
+        border-radius: 5px;
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
     }
+
+    .add-produce-container .form-control:focus,
+    .add-produce-container .form-select:focus {
+        border-color: #4CAF50; /* Vibrant green on focus */
+        outline: none;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+
+    .add-produce-container .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
     .add-produce-container .btn-primary {
         background-color: #FFCA28; /* Warm yellow */
-        border-color: #FFCA28;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #8B4513; /* Rich brown text */
+        width: 100%;
+        transition: background-color 0.3s ease;
     }
+
     .add-produce-container .btn-primary:hover {
         background-color: #f4b800; /* Lighter yellow */
-        border-color: #f4b800;
     }
+
     .add-produce-container .alert {
-        background-color: #e6f4ea; /* Light green derived from #8BC34A */
+        background-color: #e6f4ea; /* Light green */
+        color: #4CAF50;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .add-produce-container {
+            padding: 15px;
+            margin: 0 10px;
+        }
+
+        .add-produce-container h1 {
+            font-size: 2rem;
+        }
+
+        .add-produce-container .btn-primary {
+            font-size: 1rem;
+        }
     }
 </style>
 
@@ -33,14 +104,45 @@
     {% if messages %}
     <div class="messages">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        <div class="alert">{{ message }}</div>
         {% endfor %}
     </div>
     {% endif %}
 
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        <div class="form-group">
+            {{ form.title.label_tag }}
+            {{ form.title|add_class:"form-control" }}
+        </div>
+        <div class="form-group">
+            {{ form.category.label_tag }}
+            {{ form.category|add_class:"form-select" }}
+        </div>
+        <div class="form-group">
+            {{ form.description.label_tag }}
+            {{ form.description|add_class:"form-control form-textarea" }}
+        </div>
+        <div class="form-group">
+            {{ form.quantity.label_tag }}
+            {{ form.quantity|add_class:"form-control" }}
+        </div>
+        <div class="form-group">
+            {{ form.unit.label_tag }}
+            {{ form.unit|add_class:"form-select" }}
+        </div>
+        <div class="form-group">
+            {{ form.price_per_unit.label_tag }}
+            {{ form.price_per_unit|add_class:"form-control" }}
+        </div>
+        <div class="form-group">
+            {{ form.location.label_tag }}
+            {{ form.location|add_class:"form-control" }}
+        </div>
+        <div class="form-group">
+            {{ form.is_available.label_tag }}
+            {{ form.is_available|add_class:"form-check-input" }}
+        </div>
         <button type="submit" class="btn btn-primary">Add Produce</button>
     </form>
 </div>

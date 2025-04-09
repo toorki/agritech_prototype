@@ -65,11 +65,9 @@ class CustomLoginView(LoginView):
         context['error'] = messages.get_messages(self.request)
         return context
 
-# Root view
 def home(request):
     return render(request, 'marketplace/home.html')
 
-# View for adding new produce
 class AddProduceView(LoginRequiredMixin, CreateView):
     model = Produce
     form_class = ProduceForm
@@ -78,7 +76,14 @@ class AddProduceView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         logger.debug(f"Form data: {form.cleaned_data}")
-        form.instance.farmer = self.request.user.userprofile.farmer_profiles.first()  # Adjust logic if needed
+        # Get the farmer associated with the current user
+        try:
+            user_profile = self.request.user.userprofile
+            farmer = Farmer.objects.get(profile=user_profile)
+            form.instance.farmer = farmer
+        except (UserProfile.DoesNotExist, Farmer.DoesNotExist):
+            messages.error(self.request, 'You are not authorized as a farmer or your profile is incomplete.')
+            return self.form_invalid(form)
         return super().form_valid(form)
 
     def form_invalid(self, form):
