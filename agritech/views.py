@@ -3,10 +3,12 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib.auth import logout, authenticate, login
 from django.contrib import messages
-from marketplace.models import Farmer, Sponsor, Buyer, UserProfile  # Added UserProfile
+from django.views.generic.edit import CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from marketplace.models import Farmer, Sponsor, Buyer, UserProfile, Produce
+from marketplace.forms import ProduceForm
 import logging
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class CustomLoginView(LoginView):
@@ -14,7 +16,6 @@ class CustomLoginView(LoginView):
     success_url = reverse_lazy('marketplace:marketplace_home')
 
     def dispatch(self, request, *args, **kwargs):
-        # Determine the role based on the URL path
         self.role = None
         if 'farmer' in request.path:
             self.role = 'farmer'
@@ -27,18 +28,12 @@ class CustomLoginView(LoginView):
     def form_valid(self, form):
         user = form.get_user()
         logger.info(f"User {user.username} logged in successfully")
-
-        # Log the user in
         login(self.request, user)
-
-        # Get the UserProfile instance for this user
         try:
             user_profile = UserProfile.objects.get(user=user)
         except UserProfile.DoesNotExist:
             messages.error(self.request, 'No user profile exists for this account.')
             return self.form_invalid(form)
-
-        # Check role and redirect accordingly
         if self.role == 'farmer':
             if not Farmer.objects.filter(profile=user_profile).exists():
                 messages.error(self.request, 'You are not authorized as a farmer.')
@@ -50,7 +45,7 @@ class CustomLoginView(LoginView):
                 messages.error(self.request, 'You are not authorized as a sponsor.')
                 return self.form_invalid(form)
             logger.info(f"User {user.username} identified as a sponsor, redirecting to sponsorship")
-            return redirect('marketplace:sponsorship')  # Updated from 'sponsor_dashboard' to 'sponsorship'
+            return redirect('marketplace:sponsorship')
         elif self.role == 'buyer':
             if not Buyer.objects.filter(profile=user_profile).exists():
                 messages.error(self.request, 'You are not authorized as a buyer.')
@@ -73,3 +68,20 @@ class CustomLoginView(LoginView):
 # Root view
 def home(request):
     return render(request, 'marketplace/home.html')
+
+# View for adding new produce
+class AddProduceView(LoginRequiredMixin, CreateView):
+    model = Produce
+    form_class = ProduceForm
+    template_name = 'marketplace/add_produce.html'
+    success_url = reverse_lazy('marketplace:marketplace_home')
+
+    def form_valid(self, form):
+        logger.debug(f"Form data: {form.cleaned_data}")
+        form.instance.farmer = self.request.user.userprofile.farmer_profiles.first()  # Adjust logic if needed
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        logger.error(f"Form invalid: {form.errors}")
+        messages.error(self.request, f"Error adding produce: {form.errors}")
+        return self.render_to_response(self.get_context_data(form=form))

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from agritech.views import CustomLoginView
+from agritech.views import CustomLoginView, AddProduceView
 
 app_name = 'marketplace'
 
@@ -41,9 +41,9 @@ urlpatterns = [
     path('register/sponsor/', views.register_sponsor, name='register_sponsor'),
     path('register/buyer/', views.register_buyer, name='register_buyer'),
     path('farmer/dashboard/', views.farmer_dashboard, name='farmer_dashboard'),
-    path('farmer/add-produce/', views.add_produce, name='add_produce'),
+    path('farmer/add-produce/', AddProduceView.as_view(), name='add_produce'),
     path('sponsor/dashboard/', views.sponsor_dashboard, name='sponsor_dashboard'),
     path('buyer/dashboard/', views.buyer_dashboard, name='buyer_dashboard'),
     path('sponsorship/', views.sponsorship_view, name='sponsorship'),
-    path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),  # New URL pattern
+    path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),
 ]

@@ -3,7 +3,7 @@ from .models import Farmer, Buyer, ProduceCategory, Produce, Order, Rating
 from django.contrib.auth.models import User
 from .models import (
     Farmer, Buyer, ProduceCategory, Produce, Order, Rating,
-    Sponsorship, SponsorshipMilestone,SponsorshipPayment,
+    Sponsorship, SponsorshipMilestone, SponsorshipPayment,
 )
 
 # Add to your existing serializers.py file
@@ -19,7 +19,6 @@ class SponsorshipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sponsorship
         fields = '__all__'
-
 
 class SponsorshipSerializer(serializers.ModelSerializer):
     farmer_name = serializers.ReadOnlyField(source='farmer.user.get_full_name')
@@ -87,9 +86,11 @@ class ProduceSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         request = self.context.get('request')
-        if request and hasattr(request.user, 'farmer_profile'):
-            validated_data['farmer'] = request.user.farmer_profile
-            return super().create(validated_data)
+        if request and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'farmer':
+            farmer_profile = request.user.userprofile.farmer_profiles.first()
+            if farmer_profile:
+                validated_data['farmer'] = farmer_profile
+                return super().create(validated_data)
         raise serializers.ValidationError("You must be a registered farmer to create produce listings")
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -112,9 +113,11 @@ class OrderSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         request = self.context.get('request')
-        if request and hasattr(request.user, 'buyer_profile'):
-            validated_data['buyer'] = request.user.buyer_profile
-            return super().create(validated_data)
+        if request and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'buyer':
+            buyer_profile = request.user.userprofile.buyer_profiles.first()
+            if buyer_profile:
+                validated_data['buyer'] = buyer_profile
+                return super().create(validated_data)
         raise serializers.ValidationError("You must be a registered buyer to create orders")
 
 class RatingSerializer(serializers.ModelSerializer):
@@ -135,7 +138,7 @@ class RatingSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         order = validated_data.get('order')
         
-        if not request or not hasattr(request.user, 'buyer_profile'):
+        if not request or not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'buyer':
             raise serializers.ValidationError("You must be a registered buyer to create ratings")
         
         if order.buyer.user != request.user:
@@ -147,7 +150,6 @@ class RatingSerializer(serializers.ModelSerializer):
         if Rating.objects.filter(order=order).exists():
             raise serializers.ValidationError("You have already rated this order")
         
-        validated_data['buyer'] = request.user.buyer_profile
+        validated_data['buyer'] = request.user.userprofile.buyer_profiles.first()
         validated_data['farmer'] = order.produce.farmer
-        
         return super().create(validated_data)

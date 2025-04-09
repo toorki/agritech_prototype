@@ -121,14 +121,14 @@
         <div class="container-fluid">
             {% if user.is_authenticated %}
                 {% if user.userprofile.role == 'buyer' %}
-                    <a class="navbar-brand" href="{% url 'marketplace:buyer_marketplace' %}">AgriTech</a> <!-- Buyer logo to buyer_marketplace -->
+                    <a class="navbar-brand" href="{% url 'marketplace:buyer_marketplace' %}">AgriTech</a>
                 {% elif user.userprofile.role == 'sponsor' %}
-                    <a class="navbar-brand" href="{% url 'marketplace:sponsorship' %}">AgriTech</a> <!-- Sponsor logo to sponsorship -->
+                    <a class="navbar-brand" href="{% url 'marketplace:sponsorship' %}">AgriTech</a>
                 {% else %}
-                    <a class="navbar-brand" href="{% url 'marketplace:marketplace_home' %}">AgriTech</a> <!-- Default to marketplace_home for others -->
+                    <a class="navbar-brand" href="{% url 'marketplace:marketplace_home' %}">AgriTech</a>
                 {% endif %}
             {% else %}
-                <a class="navbar-brand" href="{% url 'marketplace:marketplace_home' %}">AgriTech</a> <!-- Default for unauthenticated -->
+                <a class="navbar-brand" href="{% url 'marketplace:marketplace_home' %}">AgriTech</a>
             {% endif %}
             <div class="navbar-nav ms-3">
                 {% if user.is_authenticated %}
@@ -136,7 +136,6 @@
                         <a href="{% url 'marketplace:marketplace_home' %}" class="nav-link">Marketplace</a>
                         <a href="{% url 'marketplace:sponsorship_list' %}" class="nav-link">Sponsorship</a>
                     {% elif user.userprofile.role == 'sponsor' %}
-                        <!-- Removed Marketplace link for sponsor -->
                         <a href="{% url 'marketplace:sponsorship' %}" class="nav-link">Sponsorship</a>
                     {% elif user.userprofile.role == 'buyer' %}
                         <a href="{% url 'marketplace:buyer_marketplace' %}" class="nav-link">Marketplace</a>

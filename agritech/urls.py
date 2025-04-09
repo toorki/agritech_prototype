@@ -4,6 +4,6 @@ from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='home'),  # Root URL for agritech.views.home
-    path('marketplace/', include('marketplace.urls')),  # Include marketplace URLs
+    path('', views.home, name='home'),
+    path('marketplace/', include('marketplace.urls')),
 ]

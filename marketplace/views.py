@@ -20,7 +20,7 @@ import re
 
 logger = logging.getLogger(__name__)
 
-# API ViewSets (unchanged)
+# API ViewSets
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
@@ -76,8 +76,8 @@ def marketplace_home(request):
             profile = UserProfile.objects.get(user=request.user)
             farmer = Farmer.objects.get(profile=profile)
             crops = Produce.objects.filter(farmer=farmer, is_available=True)
-            buyers = Buyer.objects.all()  # Adjust queryset as needed
-            farmers = Farmer.objects.exclude(profile=profile)  # Exclude current farmer
+            buyers = Buyer.objects.all()
+            farmers = Farmer.objects.exclude(profile=profile)
             context = {
                 'categories': categories,
                 'featured_produce': featured_produce,
@@ -114,14 +114,13 @@ def buyer_marketplace(request):
     except (UserProfile.DoesNotExist, Buyer.DoesNotExist):
         return redirect('marketplace:marketplace_home')
     
-    # Filtering logic from buyer_dashboard
     produce_items = Produce.objects.filter(is_available=True)
     location_filter = request.GET.get('location', '')
     crop_filter = request.GET.get('crop', '')
     if location_filter:
         produce_items = produce_items.filter(location__icontains=location_filter)
     if crop_filter:
-        produce_items = produce_items.filter(name__icontains=crop_filter).distinct()
+        produce_items = produce_items.filter(title__icontains=crop_filter).distinct()
     
     context = {
         'buyer': buyer,
@@ -236,41 +235,6 @@ def user_profile(request):
         return redirect('marketplace:marketplace_home')
 
 @login_required
-def add_produce(request):
-    try:
-        profile = UserProfile.objects.get(user=request.user, role='farmer')
-        farmer = Farmer.objects.get(profile=profile)
-    except (UserProfile.DoesNotExist, Farmer.DoesNotExist):
-        return redirect('marketplace:marketplace_home')
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        category_id = request.POST.get('category')
-        price_per_unit = request.POST.get('price_per_unit')
-        unit = request.POST.get('unit')
-        quantity = request.POST.get('quantity')
-        location = request.POST.get('location')
-        try:
-            category = ProduceCategory.objects.get(id=category_id)
-            Produce.objects.create(
-                farmer=farmer,
-                name=name,
-                category=category,
-                price_per_unit=price_per_unit,
-                unit=unit,
-                quantity=quantity,
-                location=location,
-                is_available=True
-            )
-            messages.success(request, 'Produce added successfully!')
-            return redirect('marketplace:farmer_dashboard')
-        except ProduceCategory.DoesNotExist:
-            messages.error(request, 'Invalid category selected.')
-        except Exception as e:
-            messages.error(request, f'Error adding produce: {str(e)}')
-    categories = ProduceCategory.objects.all()
-    return render(request, 'marketplace/add_produce.html', {'categories': categories})
-
-@login_required
 def farmer_dashboard(request):
     try:
         profile = UserProfile.objects.get(user=request.user, role='farmer')
@@ -279,7 +243,7 @@ def farmer_dashboard(request):
         return redirect('marketplace:marketplace_home')
     
     crops = Produce.objects.filter(farmer=farmer, is_available=True)
-    available_sponsorships = Sponsorship.objects.filter(status='pending', sponsor__isnull=False)
+    available_sponsorships = Sponsorship.objects.filter(status='pending', sponsor__isnull=True)
     orders = Order.objects.filter(produce__farmer=farmer, status__in=['pending', 'confirmed', 'paid'])
     
     context = {
@@ -374,7 +338,7 @@ def sponsorship_detail(request, sponsorship_id):
     try:
         profile = UserProfile.objects.get(user=request.user)
         is_farmer = profile.role == 'farmer' and sponsorship.farmer.profile == profile
-        is_sponsor = profile.role == 'sponsor' and sponsorship.sponsor.profile == profile
+        is_sponsor = profile.role == 'sponsor' and sponsorship.sponsor and sponsorship.sponsor.profile == profile
     except UserProfile.DoesNotExist:
         is_farmer = False
         is_sponsor = False
@@ -396,14 +360,13 @@ def create_sponsorship(request):
         return redirect('marketplace:marketplace_home')
     if request.method == 'POST':
         title = request.POST.get('title')
-        description = request.POST.get('description')  # Optional
+        description = request.POST.get('description')
         amount_requested = request.POST.get('amount_requested')
         expected_yield = request.POST.get('expected_yield')
-        # Removed expected_completion_date
         sponsorship = Sponsorship.objects.create(
             farmer=farmer,
             title=title,
-            description=description,  # Can be empty
+            description=description,
             amount_requested=amount_requested,
             expected_yield=expected_yield,
             status='pending'
@@ -455,10 +418,9 @@ def create_sponsorship_proposal(request):
     if request.method == 'POST':
         farmer_id = request.POST.get('farmer')
         title = request.POST.get('title')
-        description = request.POST.get('description')  # Optional
+        description = request.POST.get('description')
         amount_requested = request.POST.get('amount_requested')
-        expected_yield = request.POST.get('expected_yield')  # Will be calculated, but kept for form submission
-        # Removed expected_completion_date
+        expected_yield = request.POST.get('expected_yield')
         
         try:
             farmer = Farmer.objects.get(id=farmer_id)
@@ -466,7 +428,7 @@ def create_sponsorship_proposal(request):
                 farmer=farmer,
                 sponsor=sponsor,
                 title=title,
-                description=description,  # Can be empty
+                description=description,
                 amount_requested=amount_requested,
                 expected_yield=expected_yield,
                 status='pending'
@@ -479,11 +441,10 @@ def create_sponsorship_proposal(request):
             messages.error(request, f'Error creating sponsorship: {str(e)}')
     
     farmers = Farmer.objects.all()
-    # Default multiplier for estimated revenue (e.g., 2x investment)
     yield_multiplier = 2.0
     context = {
         'farmers': farmers,
-        'yield_multiplier': yield_multiplier,  # Pass to template for calculation
+        'yield_multiplier': yield_multiplier,
     }
     return render(request, 'marketplace/create_sponsorship_proposal.html', context)
 
