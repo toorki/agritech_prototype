@@ -1,134 +1,79 @@
-{% extends "marketplace/base.html" %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'marketplace/css/progress_bar.css' %}">
-<style>
-    /* Dynamic width styling using Django template variable */
-    .progress-width-custom {
-        width: {{ progress_width }};
-    }
-</style>
-{% endblock %}
+{% block title %}Sponsorship Details - {{ sponsorship.title }}{% endblock %}
 
 {% block content %}
+<div class="container py-5">
+    <h1>Sponsorship Proposal: {{ sponsorship.title }}</h1>
 
-{% extends "base.html" %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-{% block title %}{{ sponsorship.title }}{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h1 class="mb-4">{{ sponsorship.title }}</h1>
-            
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Project Details</h5>
-                    <p class="card-text">{{ sponsorship.description }}</p>
-                    <p><strong>Farmer:</strong> {{ sponsorship.farmer.user.get_full_name }}</p>
-                    <p><strong>Amount Requested:</strong> {{ sponsorship.amount_requested }}</p>
-                    <p><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
-                    <p><strong>Expected Completion:</strong> {{ sponsorship.expected_completion_date }}</p>
-                    <p><strong>Status:</strong> {{ sponsorship.get_status_display }}</p>
-                    
-                    {% if sponsorship.sponsor %}
-                        <p><strong>Sponsored by:</strong> {{ sponsorship.sponsor.get_full_name }}</p>
-                    {% endif %}
-                    
-                    {% if sponsorship.status == 'pending' and not is_farmer %}
-                        <a href="{% url 'sponsor_project' sponsorship.id %}" class="btn btn-success">Sponsor This Project</a>
-                    {% endif %}
-                    
-                    {% if is_farmer and sponsorship.status == 'pending' %}
-                        <p class="text-muted">Waiting for a sponsor...</p>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <h2>Milestones</h2>
-            {% if milestones %}
-                <div class="list-group mb-4">
-                    {% for milestone in milestones %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{ milestone.title }}</h5>
-                                <small>Due: {{ milestone.due_date }}</small>
-                            </div>
-                            <p class="mb-1">{{ milestone.description }}</p>
-                            <p>
-                                <span class="badge {% if milestone.status == 'completed' %}bg-success{% elif milestone.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
-                                    {{ milestone.get_status_display }}
-                                </span>
-                            </p>
-                            
-                            {% if milestone.status == 'completed' %}
-                                <p><small>Verified by: {{ milestone.verified_by.get_full_name }} on {{ milestone.verification_date }}</small></p>
-                                {% if milestone.verification_notes %}
-                                    <p><small>Notes: {{ milestone.verification_notes }}</small></p>
-                                {% endif %}
-                            {% endif %}
-                            
-                            {% if request.user.is_staff and milestone.status != 'completed' %}
-                                <a href="{% url 'update_milestone' milestone.id %}" class="btn btn-sm btn-primary">Update Status</a>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No milestones defined for this project.</p>
-            {% endif %}
-            
-            <h2>Payments</h2>
-            {% if payments %}
-                <div class="list-group mb-4">
-                    {% for payment in payments %}
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{ payment.get_payment_type_display }}</h5>
-                                <small>{{ payment.payment_date }}</small>
-                            </div>
-                            <p class="mb-1">Amount: {{ payment.amount }}</p>
-                            {% if payment.transaction_id %}
-                                <p><small>Transaction ID: {{ payment.transaction_id }}</small></p>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No payments recorded for this project.</p>
-            {% endif %}
-            
-            {% if request.user.is_staff and sponsorship.status == 'active' %}
-                <a href="{% url 'complete_sponsorship' sponsorship.id %}" class="btn btn-primary">Complete Sponsorship</a>
-            {% endif %}
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Project Status</h5>
-                    <div class="progress mb-3">
-                        {% if sponsorship.status == 'pending' %}
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%">Pending</div>
-                        {% elif sponsorship.status == 'active' %}
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: 50%">Active</div>
-                        {% elif sponsorship.status == 'completed' %}
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%">Completed</div>
-                        {% elif sponsorship.status == 'cancelled' %}
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%">Cancelled</div>
-                        {% endif %}
-                    </div>
-                    <h6>Milestone Progress</h6>
-                    <div class="progress mb-3">
-                        <div class="progress-bar bg-success progress-width-custom" role="progressbar">
-                            {{ completed_count }}/{{ total_count }}
-                        </div>
-                    </div>                 
-                </div>
-            </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Proposal Details</h5>
+            <p class="card-text"><strong>Farmer:</strong> {{ sponsorship.farmer.profile.user.get_full_name }}</p>
+            <p class="card-text"><strong>Title:</strong> {{ sponsorship.title }}</p>
+            <p class="card-text"><strong>Description:</strong> {{ sponsorship.description }}</p>
+            <p class="card-text"><strong>Amount Requested:</strong> ${{ sponsorship.amount_requested }}</p>
+            <p class="card-text"><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+            <p class="card-text"><strong>Expected Completion Date:</strong> {{ sponsorship.expected_completion_date|date:"F j, Y" }}</p>
+            <p class="card-text"><strong>Status:</strong> {{ sponsorship.status }}</p>
         </div>
     </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Sponsor Information</h5>
+            <p class="card-text"><strong>Sponsor Name:</strong> {{ sponsor_info.name }}</p>
+            <p class="card-text"><strong>Organization:</strong> {{ sponsor_info.organization }}</p>
+            <p class="card-text"><strong>Contact:</strong> {{ sponsor_info.contact }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Milestones</h5>
+            {% if milestones %}
+                <ul class="list-group">
+                    {% for milestone in milestones %}
+                        <li class="list-group-item">
+                            {{ milestone.title }} - {{ milestone.status }} (Due: {{ milestone.due_date|date:"F j, Y" }})
+                            {% if milestone.verification_notes %}
+                                <p class="text-muted">Notes: {{ milestone.verification_notes }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No milestones defined.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Payments</h5>
+            {% if payments %}
+                <ul class="list-group">
+                    {% for payment in payments %}
+                        <li class="list-group-item">
+                            {{ payment.payment_type }} - ${{ payment.amount }} (Date: {{ payment.payment_date|date:"F j, Y" }})
+                            {% if payment.transaction_id %}
+                                <p class="text-muted">Transaction ID: {{ payment.transaction_id }}</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No payments recorded.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'marketplace:notification_list' %}" class="btn btn-secondary mt-3">Back to Notifications</a>
 </div>
 {% endblock %}

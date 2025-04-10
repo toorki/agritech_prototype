@@ -1,4 +1,3 @@
-# marketplace/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -23,7 +22,7 @@ from sms_service.utils import send_sms  # Correct import if utils.py is in sms_s
 
 logger = logging.getLogger(__name__)
 
-# API ViewSets
+# API ViewSets (unchanged)
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
@@ -69,7 +68,8 @@ class SponsorshipPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = SponsorshipPaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Web UI Views
+# Web UI Views (unchanged until notification_list and sponsorship_detail)
+
 def marketplace_home(request):
     categories = ProduceCategory.objects.all()
     featured_produce = Produce.objects.filter(is_available=True).order_by('-created_at')[:6]
@@ -314,16 +314,16 @@ def farmer_dashboard(request):
         return redirect('marketplace:marketplace_home')
     
     crops = Produce.objects.filter(farmer=farmer, is_available=True)
-    available_sponsorships = Sponsorship.objects.filter(status='pending', sponsor__isnull=True)
+    sponsorships = Sponsorship.objects.filter(farmer=farmer)
     orders = Order.objects.filter(produce__farmer=farmer, status__in=['pending', 'confirmed', 'paid'])
-    unread_notifications_count = farmer.profile.user.notifications.filter(is_read=False).count()  # Precompute here
+    unread_notifications_count = farmer.profile.user.notifications.filter(is_read=False).count()
 
     context = {
         'farmer': farmer,
         'crops': crops,
-        'available_sponsorships': available_sponsorships,
+        'sponsorships': sponsorships,
         'orders': orders,
-        'unread_notifications_count': unread_notifications_count,  # Add to context
+        'unread_notifications_count': unread_notifications_count,
     }
     return render(request, 'marketplace/farmer_dashboard.html', context)
 
@@ -408,19 +408,35 @@ def sponsorship_detail(request, sponsorship_id):
     sponsorship = get_object_or_404(Sponsorship, id=sponsorship_id)
     milestones = SponsorshipMilestone.objects.filter(sponsorship=sponsorship)
     payments = SponsorshipPayment.objects.filter(sponsorship=sponsorship)
+
     try:
         profile = UserProfile.objects.get(user=request.user)
         is_farmer = profile.role == 'farmer' and sponsorship.farmer.profile == profile
         is_sponsor = profile.role == 'sponsor' and sponsorship.sponsor and sponsorship.sponsor.profile == profile
+
+        if not (is_farmer or is_sponsor):
+            logger.warning(f"Unauthorized access to sponsorship {sponsorship_id} by {request.user.username}")
+            messages.error(request, "You are not authorized to view this sponsorship.")
+            return redirect('marketplace:farmer_dashboard')
     except UserProfile.DoesNotExist:
-        is_farmer = False
-        is_sponsor = False
+        logger.error(f"User {request.user.username} has no UserProfile while accessing sponsorship {sponsorship_id}")
+        messages.error(request, "Profile not found.")
+        return redirect('marketplace:farmer_dashboard')
+
+    # Prepare sponsor information
+    sponsor_info = {
+        'name': sponsorship.sponsor.profile.user.get_full_name() if sponsorship.sponsor else "Not assigned yet",
+        'contact': sponsorship.sponsor.contact_info if sponsorship.sponsor else "Not available",
+        'organization': sponsorship.sponsor.organization if sponsorship.sponsor else "Not specified",
+    }
+
     context = {
         'sponsorship': sponsorship,
         'milestones': milestones,
         'payments': payments,
         'is_farmer': is_farmer,
         'is_sponsor': is_sponsor,
+        'sponsor_info': sponsor_info,
     }
     return render(request, 'marketplace/sponsorship_detail.html', context)
 
@@ -519,7 +535,7 @@ def create_sponsorship_proposal(request):
             # Platform Notification
             Notification.objects.create(
                 user=farmer.profile.user,
-                message=f"New sponsorship proposal '{title}' created by {sponsor.profile.user.get_full_name()}."
+                message=f"New sponsorship proposal '{sponsorship.id}' created by {sponsor.profile.user.get_full_name()}."
             )
             logger.debug(f"Platform notification created for user {farmer.profile.user.username}")
             messages.info(request, f"Notification sent to {farmer.profile.user.get_full_name()} on platform.")
@@ -603,7 +619,7 @@ def complete_sponsorship(request, sponsorship_id):
         return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     return render(request, 'marketplace/complete_sponsorship.html', {'sponsorship': sponsorship})
 
-# Registration Views
+# Registration Views (unchanged)
 def register_farmer(request):
     if request.method == 'POST':
         family_name = request.POST.get('family_name')
@@ -723,9 +739,29 @@ def sponsorship_view(request):
 def notification_list(request):
     if request.user.userprofile.role != 'farmer':
         return redirect('marketplace:marketplace_home')
+    
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
     for notification in notifications:
         notification.is_read = True
         notification.save()
-    context = {'notifications': notifications}
+    
+    # Extract sponsorship IDs from notifications
+    sponsorship_ids = []
+    for notif in notifications:
+        match = re.search(r"'(\d+)'", notif.message)
+        if match:
+            sponsorship_ids.append(int(match.group(1)))
+    
+    # Fetch related sponsorships with sponsor and farmer details
+    sponsorships = (Sponsorship.objects.filter(id__in=sponsorship_ids)
+                   .select_related('sponsor', 'farmer')
+                   .order_by('id') if sponsorship_ids else [])
+
+    # Create a mapping of notification IDs to sponsorships
+    notification_sponsorship_map = {s.id: s for s in sponsorships}
+
+    context = {
+        'notifications': notifications,
+        'notification_sponsorship_map': notification_sponsorship_map,
+    }
     return render(request, 'marketplace/notification_list.html', context)

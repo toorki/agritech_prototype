@@ -1,22 +1,138 @@
 {% extends 'base.html' %}
 
+{% load custom_filters %}
+
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <h1>Notifications</h1>
-    {% if notifications %}
-        {% for notification in notifications %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <p class="card-text">{{ notification.message }}</p>
-                    <p class="text-muted">Received: {{ notification.created_at|date:"F j, Y H:i" }}</p>
-                </div>
+    <style>
+        /* Custom Styling for Notification Page */
+        body {
+            background-color: #f8f9fa; /* Matches farmer dashboard background */
+        }
+        .notification-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .notification-container h1 {
+            font-weight: 700;
+            color: #8B4513; /* Rich brown from farmer dashboard */
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .alert {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fff9e6; /* Light yellow derived from #FFCA28 */
+            border-color: #FFCA28;
+            color: #8B4513; /* Rich brown text */
+        }
+        .list-group {
+            margin-bottom: 30px;
+        }
+        .list-group-item {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #e6f4ea; /* Light green derived from #8BC34A */
+            margin-bottom: 15px;
+            padding: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .list-group-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background-color: #d4edda; /* Slightly darker green on hover */
+        }
+        .list-group-item h5 {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: #4CAF50; /* Vibrant green from farmer dashboard */
+            margin-bottom: 10px;
+        }
+        .list-group-item small {
+            font-size: 0.85rem;
+            color: #8B4513; /* Rich brown for timestamps */
+        }
+        .list-group-item p {
+            font-size: 0.95rem;
+            color: #8B4513; /* Rich brown text */
+            margin-bottom: 10px;
+        }
+        .view-details-btn {
+            background-color: #4CAF50; /* Vibrant green from farmer dashboard */
+            border-color: #4CAF50;
+            font-weight: 500;
+            padding: 8px 16px;
+            transition: background-color 0.3s ease;
+        }
+        .view-details-btn:hover {
+            background-color: #8BC34A; /* Soft green from farmer dashboard */
+            border-color: #689F38;
+        }
+        .back-btn {
+            background-color: #FFCA28; /* Warm yellow from farmer dashboard */
+            border-color: #FFCA28;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .back-btn:hover {
+            background-color: #f4b800; /* Lighter yellow from farmer dashboard */
+            border-color: #f4b800;
+        }
+        .no-notifications {
+            font-size: 1.1rem;
+            color: #8B4513; /* Rich brown text */
+            text-align: center;
+            padding: 20px;
+            background-color: #fff9e6; /* Light yellow background */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .notification-container {
+                padding: 15px;
+            }
+            .list-group-item {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+
+    <div class="notification-container">
+        <h1>Notifications</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% if notifications %}
+            <div class="list-group">
+                {% for notification in notifications %}
+                    {% with sponsorship=notification_sponsorship_map|get_item:notification.id %}
+                        <a href="{% if sponsorship %}{% url 'marketplace:sponsorship_detail' sponsorship.id %}{% else %}#{% endif %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ notification.message }}</h5>
+                                <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">Related Sponsorship: {% if sponsorship %}{{ sponsorship.title }}{% else %}Not available{% endif %}</p>
+                            <button class="btn view-details-btn">View Details</button>
+                        </a>
+                    {% endwith %}
+                {% empty %}
+                    <p class="no-notifications">No notifications available.</p>
+                {% endfor %}
             </div>
-        {% endfor %}
-    {% else %}
-        <p>No notifications available.</p>
-    {% endif %}
-    <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+        {% else %}
+            <p class="no-notifications">No notifications available.</p>
+        {% endif %}
+        <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn back-btn mt-3">Back to Dashboard</a>
+    </div>
 </div>
 {% endblock %}
