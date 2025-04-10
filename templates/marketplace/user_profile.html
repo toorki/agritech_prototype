@@ -5,6 +5,7 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
+<!-- Base styles for farmer and buyer profiles -->
 <style>
     .profile-container {
         max-width: 800px;
@@ -21,7 +22,7 @@
     }
 
     .profile-header h1 {
-        color: #4CAF50;
+        color: #4CAF50; /* Green for farmer/buyer */
         font-size: 2.5rem;
         margin-bottom: 10px;
     }
@@ -31,7 +32,7 @@
         padding: 20px;
         background-color: #f9f9f9;
         border-radius: 8px;
-        border-left: 5px solid #4CAF50;
+        border-left: 5px solid #4CAF50; /* Green for farmer/buyer */
     }
 
     .profile-section h2 {
@@ -47,7 +48,7 @@
     }
 
     .profile-section strong {
-        color: #2E7D32;
+        color: #2E7D32; /* Dark green for farmer/buyer */
         margin-right: 10px;
     }
 
@@ -86,7 +87,75 @@
     }
 </style>
 
-<div class="profile-container">
+<!-- Sponsor-specific styles (applied conditionally) -->
+{% if profile_type == 'sponsor' %}
+<style>
+    .profile-container {
+        background-color: #fff;
+    }
+
+    .profile-header h1 {
+        color: #757575; /* Medium gray - matches sponsor dashboard */
+    }
+
+    .profile-section {
+        background-color: #B0BEC5; /* Light gray - matches sponsor dashboard */
+        border-left: 5px solid #1976D2; /* Deeper blue - matches sponsor dashboard */
+    }
+
+    .profile-section h2 {
+        color: #1976D2; /* Deeper blue - matches sponsor dashboard */
+    }
+
+    .profile-section p {
+        color: #757575; /* Medium gray - matches sponsor dashboard */
+    }
+
+    .profile-section strong {
+        color: #1976D2; /* Deeper blue - matches sponsor dashboard */
+    }
+
+    .sponsorship-item {
+        background-color: #fff;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid #757575; /* Medium gray - matches sponsor dashboard */
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .sponsorship-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .no-items {
+        color: #757575; /* Medium gray - matches sponsor dashboard */
+    }
+
+    .dashboard-container .btn-primary {
+        background-color: #FFD700; /* Classic gold - matches sponsor dashboard */
+        border-color: #FFD700;
+    }
+
+    .dashboard-container .btn-primary:hover {
+        background-color: #F4A460; /* Warm gold - matches sponsor dashboard */
+        border-color: #F4A460;
+    }
+
+    .dashboard-container .btn {
+        background-color: #FFD700; /* Classic gold - matches sponsor dashboard */
+        border-color: #FFD700;
+    }
+
+    .dashboard-container .btn:hover {
+        background-color: #F4A460; /* Warm gold - matches sponsor dashboard */
+        border-color: #F4A460;
+    }
+</style>
+{% endif %}
+
+<div class="profile-container {% if profile_type == 'sponsor' %}dashboard-container{% endif %}">
     <div class="profile-header">
         <h1>My Profile</h1>
     </div>
@@ -100,7 +169,7 @@
         {% if profile_type == 'buyer' or profile_type == 'farmer' %}
             <p><strong>Address:</strong> {{ profile.location }}</p>
         {% elif profile_type == 'sponsor' %}
-            <p><strong>Address:</strong> {{ profile.organization }}</p>
+            <p><strong>Organization:</strong> {{ profile.organization }}</p>
         {% endif %}
     </div>
 
@@ -119,6 +188,25 @@
                 {% endfor %}
             {% else %}
                 <p class="no-items">No crops listed yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if profile_type == 'sponsor' %}
+        <div class="profile-section">
+            <h2>Active Sponsorships</h2>
+            {% if active_sponsorships %}
+                {% for sponsorship in active_sponsorships %}
+                    <div class="sponsorship-item">
+                        <p><strong>Title:</strong> {{ sponsorship.title }}</p>
+                        <p><strong>Farmer:</strong> {{ sponsorship.farmer.profile.user.username }}</p>
+                        <p><strong>Amount Requested:</strong> ${{ sponsorship.amount_requested }}</p>
+                        <p><strong>Status:</strong> {{ sponsorship.status }}</p>
+                        <a href="{% url 'marketplace:sponsorship_detail' sponsorship.id %}" class="btn btn-primary">View Details</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-items">No active sponsorships found.</p>
             {% endif %}
         </div>
     {% endif %}

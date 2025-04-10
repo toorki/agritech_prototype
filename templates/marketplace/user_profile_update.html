@@ -4,8 +4,9 @@
 
 {% block content %}
 <div class="container py-5">
+    <!-- Base styles for farmer and buyer profiles -->
     <style>
-        /* Custom Styling for User Profile Update Page */
+        /* Custom Styling for User Profile Update Page (default for farmer/buyer) */
         body {
             background-color: #f8f9fa; /* Matches farmer dashboard background */
         }
@@ -90,6 +91,96 @@
             }
         }
     </style>
+
+    <!-- Sponsor-specific styles (applied conditionally) -->
+    {% if profile_type == 'sponsor' %}
+    <style>
+        body {
+            background-color: #f8f9fa; /* Keep background consistent */
+        }
+        .profile-update-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .profile-update-container h1 {
+            font-weight: 700;
+            color: #757575; /* Medium gray - matches sponsor dashboard */
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .alert {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #e6f0fa; /* Light blue derived from #2196F3, adjusted to fit palette */
+            border-color: #1976D2; /* Deeper blue - matches sponsor dashboard */
+            color: #757575; /* Medium gray - matches sponsor dashboard */
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #B0BEC5; /* Light gray - matches sponsor dashboard */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #1976D2; /* Deeper blue - matches sponsor dashboard */
+            margin-bottom: 5px;
+        }
+        .form-control {
+            border-radius: 5px;
+            border-color: #757575; /* Medium gray - matches sponsor dashboard */
+            padding: 10px;
+            font-size: 0.95rem;
+            background-color: #B0BEC5; /* Light gray - matches sponsor dashboard */
+            color: #757575; /* Medium gray - matches sponsor dashboard */
+        }
+        .form-control:focus {
+            border-color: #1976D2; /* Deeper blue - matches sponsor dashboard */
+            box-shadow: 0 0 5px rgba(25, 118, 210, 0.5);
+        }
+        .btn-primary {
+            background-color: #FFD700; /* Classic gold - matches sponsor dashboard */
+            border-color: #FFD700;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #F4A460; /* Warm gold - matches sponsor dashboard */
+            border-color: #F4A460;
+        }
+        .btn-secondary {
+            background-color: #FFD700; /* Classic gold - matches sponsor dashboard */
+            border-color: #FFD700;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #F4A460; /* Warm gold - matches sponsor dashboard */
+            border-color: #F4A460;
+        }
+        @media (max-width: 768px) {
+            .profile-update-container {
+                padding: 15px;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+    {% endif %}
 
     <div class="profile-update-container">
         <h1>Update Profile</h1>

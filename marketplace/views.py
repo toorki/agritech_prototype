@@ -231,7 +231,8 @@ def user_profile(request):
             context = {'profile': farmer, 'produce_items': produce_items, 'orders': orders, 'profile_type': 'farmer'}
         elif profile.role == 'sponsor':
             sponsor = Sponsor.objects.get(profile=profile)
-            context = {'profile': sponsor, 'profile_type': 'sponsor'}
+            active_sponsorships = Sponsorship.objects.filter(sponsor=sponsor, status='active')
+            context = {'profile': sponsor, 'active_sponsorships': active_sponsorships, 'profile_type': 'sponsor'}
         else:
             logger.warning(f"User {user.username} has an invalid role: {profile.role}")
             messages.error(request, "Invalid user role.")
