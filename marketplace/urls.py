@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from agritech.views import CustomLoginView, AddProduceView
 
-app_name = 'marketplace'  # Namespace for the app
+app_name = 'marketplace'  
 
 router = DefaultRouter()
 router.register(r'farmers', views.FarmerViewSet)
@@ -48,5 +48,5 @@ urlpatterns = [
     path('sponsorship/', views.sponsorship_view, name='sponsorship'),
     path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),
     path('notifications/', views.notification_list, name='notification_list'),
-    path('produce/<int:produce_id>/delete/', views.delete_produce, name='delete_produce'),  # New URL pattern
+    path('produce/<int:produce_id>/delete/', views.delete_produce, name='delete_produce'),
 ]

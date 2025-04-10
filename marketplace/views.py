@@ -22,7 +22,7 @@ from sms_service.utils import send_sms  # Correct import if utils.py is in sms_s
 
 logger = logging.getLogger(__name__)
 
-# API ViewSets (unchanged)
+# API ViewSets
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
