@@ -104,35 +104,33 @@
         }
     </style>
 
-    <div class="notification-container">
-        <h1>Notifications</h1>
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
+<div class="notification-container">
+    <h1>Notifications</h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-        {% if notifications %}
-            <div class="list-group">
-                {% for notification in notifications %}
-                    {% with sponsorship=notification_sponsorship_map|get_item:notification.id %}
-                        <a href="{% if sponsorship %}{% url 'marketplace:sponsorship_detail' sponsorship.id %}{% else %}#{% endif %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{ notification.message }}</h5>
-                                <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
-                            </div>
-                            <p class="mb-1">Related Sponsorship: {% if sponsorship %}{{ sponsorship.title }}{% else %}Not available{% endif %}</p>
-                            <button class="btn view-details-btn">View Details</button>
-                        </a>
-                    {% endwith %}
-                {% empty %}
-                    <p class="no-notifications">No notifications available.</p>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="no-notifications">No notifications available.</p>
-        {% endif %}
-        <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn back-btn mt-3">Back to Dashboard</a>
-    </div>
+    {% if notification_sponsorships %}
+        <div class="list-group">
+            {% for item in notification_sponsorships %}
+                <a href="{% if item.sponsorship %}{% url 'marketplace:sponsorship_detail' item.sponsorship.id %}{% else %}#{% endif %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ item.notification.message }}</h5>
+                        <small>{{ item.notification.created_at|date:"F j, Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">Related Sponsorship: {% if item.sponsorship %}{{ item.sponsorship.title }}{% else %}Not available{% endif %}</p>
+                    <button class="btn view-details-btn">View Details</button>
+                </a>
+            {% empty %}
+                <p class="no-notifications">No notifications available.</p>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-notifications">No notifications available.</p>
+    {% endif %}
+    <a href="{% url 'marketplace:farmer_dashboard' %}" class="btn back-btn mt-3">Back to Dashboard</a>
+</div>
 </div>
 {% endblock %}

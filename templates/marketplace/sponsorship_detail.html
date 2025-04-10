@@ -4,76 +4,194 @@
 
 {% block content %}
 <div class="container py-5">
-    <h1>Sponsorship Proposal: {{ sponsorship.title }}</h1>
+    <style>
+        /* Custom Styling for Sponsorship Detail Page */
+        body {
+            background-color: #f8f9fa; /* Matches farmer dashboard background */
+        }
+        .sponsorship-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .sponsorship-container h1 {
+            font-weight: 700;
+            color: #8B4513; /* Rich brown */
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .alert {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fff9e6; /* Light yellow */
+            border-color: #FFCA28;
+            color: #8B4513; /* Rich brown text */
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #e6f4ea; /* Light green */
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .card-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: #4CAF50; /* Vibrant green */
+            margin-bottom: 15px;
+        }
+        .card-text {
+            font-size: 0.95rem;
+            color: #8B4513; /* Rich brown */
+            margin-bottom: 10px;
+        }
+        .list-group-item {
+            border: none;
+            border-radius: 8px;
+            background-color: #fff9e6; /* Light yellow */
+            margin-bottom: 10px;
+            padding: 15px;
+            color: #8B4513; /* Rich brown */
+        }
+        .list-group-item .text-muted {
+            color: #689F38; /* Darker green */
+        }
+        .approve-btn {
+            background-color: #4CAF50; /* Vibrant green */
+            border-color: #4CAF50;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+        .approve-btn:hover {
+            background-color: #8BC34A; /* Soft green */
+            border-color: #689F38;
+        }
+        .reject-btn {
+            background-color: #D32F2F; /* Red for rejection */
+            border-color: #D32F2F;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .reject-btn:hover {
+            background-color: #C62828; /* Darker red */
+            border-color: #B71C1C;
+        }
+        .back-btn {
+            background-color: #FFCA28; /* Warm yellow */
+            border-color: #FFCA28;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .back-btn:hover {
+            background-color: #f4b800; /* Lighter yellow */
+            border-color: #f4b800;
+        }
+        @media (max-width: 768px) {
+            .sponsorship-container {
+                padding: 15px;
+            }
+            .card {
+                margin-bottom: 15px;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+    <div class="sponsorship-container">
+        <h1>Sponsorship Proposal: {{ sponsorship.title }}</h1>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Proposal Details</h5>
-            <p class="card-text"><strong>Farmer:</strong> {{ sponsorship.farmer.profile.user.get_full_name }}</p>
-            <p class="card-text"><strong>Title:</strong> {{ sponsorship.title }}</p>
-            <p class="card-text"><strong>Description:</strong> {{ sponsorship.description }}</p>
-            <p class="card-text"><strong>Amount Requested:</strong> ${{ sponsorship.amount_requested }}</p>
-            <p class="card-text"><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
-            <p class="card-text"><strong>Expected Completion Date:</strong> {{ sponsorship.expected_completion_date|date:"F j, Y" }}</p>
-            <p class="card-text"><strong>Status:</strong> {{ sponsorship.status }}</p>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Proposal Details</h5>
+                <p class="card-text"><strong>Farmer:</strong> {{ sponsorship.farmer.profile.user.get_full_name }}</p>
+                <p class="card-text"><strong>Title:</strong> {{ sponsorship.title }}</p>
+                <p class="card-text"><strong>Description:</strong> {{ sponsorship.description }}</p>
+                <p class="card-text"><strong>Amount Requested:</strong> ${{ sponsorship.amount_requested }}</p>
+                <p class="card-text"><strong>Expected Yield:</strong> {{ sponsorship.expected_yield }}</p>
+                <p class="card-text"><strong>Expected Completion Date:</strong> {{ sponsorship.expected_completion_date|date:"F j, Y" }}</p>
+                <p class="card-text"><strong>Status:</strong> {{ sponsorship.status }}</p>
+            </div>
         </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Sponsor Information</h5>
-            <p class="card-text"><strong>Sponsor Name:</strong> {{ sponsor_info.name }}</p>
-            <p class="card-text"><strong>Organization:</strong> {{ sponsor_info.organization }}</p>
-            <p class="card-text"><strong>Contact:</strong> {{ sponsor_info.contact }}</p>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Sponsor Information</h5>
+                <p class="card-text"><strong>Name:</strong> {{ sponsor_info.name }}</p>
+                <p class="card-text"><strong>Organization:</strong> {{ sponsor_info.organization }}</p>
+                <p class="card-text"><strong>Contact:</strong> {{ sponsor_info.contact }}</p>
+            </div>
         </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Milestones</h5>
-            {% if milestones %}
-                <ul class="list-group">
-                    {% for milestone in milestones %}
-                        <li class="list-group-item">
-                            {{ milestone.title }} - {{ milestone.status }} (Due: {{ milestone.due_date|date:"F j, Y" }})
-                            {% if milestone.verification_notes %}
-                                <p class="text-muted">Notes: {{ milestone.verification_notes }}</p>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No milestones defined.</p>
-            {% endif %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Milestones</h5>
+                {% if milestones %}
+                    <ul class="list-group">
+                        {% for milestone in milestones %}
+                            <li class="list-group-item">
+                                {{ milestone.title }} - {{ milestone.status }} (Due: {{ milestone.due_date|date:"F j, Y" }})
+                                {% if milestone.verification_notes %}
+                                    <p class="text-muted">Notes: {{ milestone.verification_notes }}</p>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text">No milestones defined.</p>
+                {% endif %}
+            </div>
         </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Payments</h5>
-            {% if payments %}
-                <ul class="list-group">
-                    {% for payment in payments %}
-                        <li class="list-group-item">
-                            {{ payment.payment_type }} - ${{ payment.amount }} (Date: {{ payment.payment_date|date:"F j, Y" }})
-                            {% if payment.transaction_id %}
-                                <p class="text-muted">Transaction ID: {{ payment.transaction_id }}</p>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No payments recorded.</p>
-            {% endif %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Payments</h5>
+                {% if payments %}
+                    <ul class="list-group">
+                        {% for payment in payments %}
+                            <li class="list-group-item">
+                                {{ payment.payment_type }} - ${{ payment.amount }} (Date: {{ payment.payment_date|date:"F j, Y" }})
+                                {% if payment.transaction_id %}
+                                    <p class="text-muted">Transaction ID: {{ payment.transaction_id }}</p>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="card-text">No payments recorded.</p>
+                {% endif %}
+            </div>
         </div>
-    </div>
 
-    <a href="{% url 'marketplace:notification_list' %}" class="btn btn-secondary mt-3">Back to Notifications</a>
+        {% if is_farmer and sponsorship.status == 'pending' %}
+            <form method="post" class="mt-3">
+                {% csrf_token %}
+                <button type="submit" name="action" value="approve" class="btn approve-btn">Approve</button>
+                <button type="submit" name="action" value="reject" class="btn reject-btn">Reject</button>
+            </form>
+        {% endif %}
+        <a href="{% url 'marketplace:notification_list' %}" class="btn back-btn mt-3">Back to Notifications</a>
+    </div>
 </div>
 {% endblock %}

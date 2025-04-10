@@ -22,7 +22,7 @@ from sms_service.utils import send_sms  # Correct import if utils.py is in sms_s
 
 logger = logging.getLogger(__name__)
 
-# API ViewSets (unchanged)
+# API ViewSets
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
@@ -68,8 +68,7 @@ class SponsorshipPaymentViewSet(viewsets.ModelViewSet):
     serializer_class = SponsorshipPaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Web UI Views (unchanged until notification_list and sponsorship_detail)
-
+# Web UI Views
 def marketplace_home(request):
     categories = ProduceCategory.objects.all()
     featured_produce = Produce.objects.filter(is_available=True).order_by('-created_at')[:6]
@@ -423,10 +422,33 @@ def sponsorship_detail(request, sponsorship_id):
         messages.error(request, "Profile not found.")
         return redirect('marketplace:farmer_dashboard')
 
+    # Handle approval or rejection by farmer
+    if request.method == 'POST' and is_farmer:
+        action = request.POST.get('action')
+        if action == 'approve' and sponsorship.status == 'pending':
+            sponsorship.status = 'active'
+            sponsorship.save()
+            messages.success(request, "Sponsorship proposal approved successfully!")
+            # Notify sponsor
+            Notification.objects.create(
+                user=sponsorship.sponsor.profile.user,
+                message=f"Your sponsorship proposal '{sponsorship.title}' has been approved by {sponsorship.farmer.profile.user.get_full_name()}."
+            )
+        elif action == 'reject' and sponsorship.status == 'pending':
+            sponsorship.status = 'cancelled'
+            sponsorship.save()
+            messages.success(request, "Sponsorship proposal rejected successfully!")
+            # Notify sponsor
+            Notification.objects.create(
+                user=sponsorship.sponsor.profile.user,
+                message=f"Your sponsorship proposal '{sponsorship.title}' has been rejected by {sponsorship.farmer.profile.user.get_full_name()}."
+            )
+        return redirect('marketplace:notification_list')
+
     # Prepare sponsor information
     sponsor_info = {
         'name': sponsorship.sponsor.profile.user.get_full_name() if sponsorship.sponsor else "Not assigned yet",
-        'contact': sponsorship.sponsor.contact_info if sponsorship.sponsor else "Not available",
+        'contact': sponsorship.sponsor.phone_number if sponsorship.sponsor else "Not available",  # Updated to use phone_number from Sponsor model
         'organization': sponsorship.sponsor.organization if sponsorship.sponsor else "Not specified",
     }
 
@@ -619,7 +641,7 @@ def complete_sponsorship(request, sponsorship_id):
         return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     return render(request, 'marketplace/complete_sponsorship.html', {'sponsorship': sponsorship})
 
-# Registration Views (unchanged)
+# Registration Views
 def register_farmer(request):
     if request.method == 'POST':
         family_name = request.POST.get('family_name')
@@ -724,7 +746,7 @@ def register_buyer(request):
 def sponsorship_view(request):
     try:
         profile = UserProfile.objects.get(user=request.user, role='sponsor')
-        sponsor = Sponsor.objects.get(profile=profile)
+        sponsor = Sponsor.objects.get(profile=profile)  # Fixed syntax error here
     except (UserProfile.DoesNotExist, Sponsor.DoesNotExist):
         return redirect('marketplace:marketplace_home')
     
@@ -757,11 +779,20 @@ def notification_list(request):
                    .select_related('sponsor', 'farmer')
                    .order_by('id') if sponsorship_ids else [])
 
-    # Create a mapping of notification IDs to sponsorships
-    notification_sponsorship_map = {s.id: s for s in sponsorships}
+    # Create a mapping of sponsorship IDs to sponsorship objects
+    sponsorship_map = {s.id: s for s in sponsorships}
+
+    # Create a list of notification-sponsorship pairs
+    notification_sponsorships = []
+    for notification in notifications:
+        match = re.search(r"'(\d+)'", notification.message)
+        sponsorship = sponsorship_map.get(int(match.group(1))) if match else None
+        notification_sponsorships.append({
+            'notification': notification,
+            'sponsorship': sponsorship
+        })
 
     context = {
-        'notifications': notifications,
-        'notification_sponsorship_map': notification_sponsorship_map,
+        'notification_sponsorships': notification_sponsorships,
     }
     return render(request, 'marketplace/notification_list.html', context)
