@@ -48,4 +48,5 @@ urlpatterns = [
     path('sponsorship/', views.sponsorship_view, name='sponsorship'),
     path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),
     path('notifications/', views.notification_list, name='notification_list'),
+    path('produce/<int:produce_id>/delete/', views.delete_produce, name='delete_produce'),  # New URL pattern
 ]

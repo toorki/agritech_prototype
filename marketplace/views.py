@@ -22,7 +22,7 @@ from sms_service.utils import send_sms  # Correct import if utils.py is in sms_s
 
 logger = logging.getLogger(__name__)
 
-# API ViewSets
+# API ViewSets (unchanged)
 class FarmerViewSet(viewsets.ModelViewSet):
     queryset = Farmer.objects.all()
     serializer_class = FarmerSerializer
@@ -435,20 +435,30 @@ def sponsorship_detail(request, sponsorship_id):
                 message=f"Your sponsorship proposal '{sponsorship.title}' has been approved by {sponsorship.farmer.profile.user.get_full_name()}."
             )
         elif action == 'reject' and sponsorship.status == 'pending':
-            sponsorship.status = 'cancelled'
-            sponsorship.save()
-            messages.success(request, "Sponsorship proposal rejected successfully!")
-            # Notify sponsor
+            sponsorship.delete()  # Delete the sponsorship instead of changing status
+            messages.success(request, "Sponsorship proposal rejected and removed.")
+            # Notify sponsor via platform
             Notification.objects.create(
                 user=sponsorship.sponsor.profile.user,
                 message=f"Your sponsorship proposal '{sponsorship.title}' has been rejected by {sponsorship.farmer.profile.user.get_full_name()}."
             )
-        return redirect('marketplace:notification_list')
+            # Notify sponsor via email
+            subject = f"Sponsorship Proposal Rejected: {sponsorship.title}"
+            message = f"Dear {sponsorship.sponsor.profile.user.get_full_name()},\n\nYour sponsorship proposal '{sponsorship.title}' has been rejected by {sponsorship.farmer.profile.user.get_full_name()}.\n\nBest,\nAgriTech Team"
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [sponsorship.sponsor.profile.user.email]
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            logger.debug(f"Email sent to {sponsorship.sponsor.profile.user.email}")
+            # Notify sponsor via SMS
+            sms_message = f"Your sponsorship proposal '{sponsorship.title}' has been rejected by {sponsorship.farmer.profile.user.get_full_name()}. AgriTech"
+            send_sms(sponsorship.sponsor.phone_number, sms_message)
+            logger.debug(f"SMS sent to {sponsorship.sponsor.phone_number}")
+        return redirect('marketplace:farmer_dashboard')  # Redirect to dashboard to refresh sponsorships
 
     # Prepare sponsor information
     sponsor_info = {
         'name': sponsorship.sponsor.profile.user.get_full_name() if sponsorship.sponsor else "Not assigned yet",
-        'contact': sponsorship.sponsor.phone_number if sponsorship.sponsor else "Not available",  # Updated to use phone_number from Sponsor model
+        'contact': sponsorship.sponsor.phone_number if sponsorship.sponsor else "Not available",
         'organization': sponsorship.sponsor.organization if sponsorship.sponsor else "Not specified",
     }
 
@@ -641,6 +651,27 @@ def complete_sponsorship(request, sponsorship_id):
         return redirect('marketplace:sponsorship_detail', sponsorship_id=sponsorship.id)
     return render(request, 'marketplace/complete_sponsorship.html', {'sponsorship': sponsorship})
 
+@login_required
+def delete_produce(request, produce_id):
+    produce = get_object_or_404(Produce, id=produce_id)
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        farmer = Farmer.objects.get(profile=profile)
+        if produce.farmer != farmer:
+            messages.error(request, "You are not authorized to delete this produce.")
+            return redirect('marketplace:farmer_dashboard')
+    except (UserProfile.DoesNotExist, Farmer.DoesNotExist):
+        messages.error(request, "Profile not found.")
+        return redirect('marketplace:farmer_dashboard')
+
+    if request.method == 'POST':
+        produce.delete()
+        messages.success(request, "Produce deleted successfully!")
+        return redirect('marketplace:farmer_dashboard')
+
+    context = {'produce': produce}
+    return render(request, 'marketplace/confirm_delete_produce.html', context)
+
 # Registration Views
 def register_farmer(request):
     if request.method == 'POST':
@@ -746,7 +777,7 @@ def register_buyer(request):
 def sponsorship_view(request):
     try:
         profile = UserProfile.objects.get(user=request.user, role='sponsor')
-        sponsor = Sponsor.objects.get(profile=profile)  # Fixed syntax error here
+        sponsor = Sponsor.objects.get(profile=profile)
     except (UserProfile.DoesNotExist, Sponsor.DoesNotExist):
         return redirect('marketplace:marketplace_home')
     
@@ -779,20 +810,11 @@ def notification_list(request):
                    .select_related('sponsor', 'farmer')
                    .order_by('id') if sponsorship_ids else [])
 
-    # Create a mapping of sponsorship IDs to sponsorship objects
-    sponsorship_map = {s.id: s for s in sponsorships}
-
-    # Create a list of notification-sponsorship pairs
-    notification_sponsorships = []
-    for notification in notifications:
-        match = re.search(r"'(\d+)'", notification.message)
-        sponsorship = sponsorship_map.get(int(match.group(1))) if match else None
-        notification_sponsorships.append({
-            'notification': notification,
-            'sponsorship': sponsorship
-        })
+    # Create a mapping of notification IDs to sponsorships
+    notification_sponsorship_map = {s.id: s for s in sponsorships}
 
     context = {
-        'notification_sponsorships': notification_sponsorships,
+        'notifications': notifications,
+        'notification_sponsorship_map': notification_sponsorship_map,
     }
     return render(request, 'marketplace/notification_list.html', context)
