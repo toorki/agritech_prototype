@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import viewsets, permissions
+from decimal import Decimal
 from .models import (
     Farmer, Buyer, ProduceCategory, Produce, Order, Rating,
     Sponsorship, SponsorshipMilestone, SponsorshipPayment, UserProfile, Sponsor, Notification
@@ -180,6 +181,24 @@ def produce_detail(request, produce_id):
 def logout_view(request):
     logout(request)
     return redirect('marketplace:marketplace_home')
+
+def produce_detail(request, produce_id):
+    produce = get_object_or_404(Produce, id=produce_id)
+    related_items = Produce.objects.filter(category=produce.category, is_available=True).exclude(id=produce_id)[:4]
+    MIN_QUANTITY = {
+        'kg': 50.0,
+        'g': 50000.0,
+        'ton': 0.05,
+        'l': 50.0,
+        'unit': 50.0
+    }
+    min_quantity = MIN_QUANTITY.get(produce.unit, 50.0)
+    context = {
+        'produce': produce,
+        'related_items': related_items,
+        'min_quantity': min_quantity,
+    }
+    return render(request, 'marketplace/produce_detail.html', context)
 
 @login_required
 def order_list(request):
@@ -819,3 +838,97 @@ def notification_list(request):
         'notification_sponsorship_map': notification_sponsorship_map,
     }
     return render(request, 'marketplace/notification_list.html', context)
+
+@login_required
+def create_order(request, produce_id):
+    produce = get_object_or_404(Produce, id=produce_id)
+    user_profile = getattr(request.user, 'userprofile', None)
+
+    if not user_profile or user_profile.role != 'buyer':
+        logger.error(f"Unauthorized order attempt by {request.user.username} (role: {user_profile.role if user_profile else 'None'})")
+        messages.error(request, "You must be logged in as a buyer to place an order.")
+        return redirect('marketplace:produce_detail', produce_id=produce.id)
+
+    try:
+        buyer = Buyer.objects.get(profile=user_profile)
+    except Buyer.DoesNotExist:
+        logger.error(f"No buyer profile found for user {request.user.username}")
+        messages.error(request, "No buyer profile found. Please ensure your account is set up as a buyer.")
+        return redirect('marketplace:produce_detail', produce_id=produce.id)
+
+    if request.method == 'POST':
+        quantity_str = request.POST.get('quantity', '')
+        delivery_location = request.POST.get('delivery_location', '')
+        delivery_notes = request.POST.get('delivery_notes', '')
+
+        try:
+            quantity = Decimal(quantity_str)
+        except ValueError:
+            logger.error(f"Invalid quantity value: {quantity_str}")
+            messages.error(request, "Please enter a valid quantity.")
+            return redirect('marketplace:produce_detail', produce_id=produce.id)
+
+        MIN_QUANTITY = {
+            'kg': Decimal('50.0'),
+            'g': Decimal('50000.0'),
+            'ton': Decimal('0.05'),
+            'l': Decimal('50.0'),
+            'unit': Decimal('50.0')
+        }
+        min_quantity = MIN_QUANTITY.get(produce.unit, Decimal('50.0'))
+
+        if quantity < min_quantity:
+            messages.error(request, f"Minimum order quantity is {min_quantity} {produce.unit}. Please enter a valid quantity.")
+            return redirect('marketplace:produce_detail', produce_id=produce.id)
+        if quantity <= Decimal('0') or quantity > produce.quantity:
+            messages.error(request, f"Invalid quantity. Please enter a value between {min_quantity} and {produce.quantity} {produce.unit}.")
+            return redirect('marketplace:produce_detail', produce_id=produce.id)
+
+        unit_price = produce.price_per_unit
+        subtotal = quantity * unit_price
+        platform_fee = subtotal * Decimal('0.02')
+        total_amount = subtotal + platform_fee
+
+        order = Order.objects.create(
+            buyer=buyer,
+            produce=produce,
+            quantity=quantity,
+            unit_price=unit_price,
+            platform_fee=platform_fee,
+            total_amount=total_amount,
+            status='pending',
+            delivery_location=delivery_location,
+            delivery_notes=delivery_notes
+        )
+
+        produce.quantity -= quantity
+        produce.save()
+
+        Notification.objects.create(
+            user=produce.farmer.profile.user,
+            message=f"New order placed for {produce.title} by {buyer.profile.user.get_full_name()}."
+        )
+        messages.success(request, "Order placed successfully! You will be notified of the status.")
+        return redirect('marketplace:order_detail', order_id=order.id)
+
+    return redirect('marketplace:produce_detail', produce_id=produce.id)
+
+@login_required
+def order_detail(request, order_id):
+    user = request.user
+    try:
+        profile = UserProfile.objects.get(user=user)
+        if profile.role == 'buyer':
+            order = get_object_or_404(Order, id=order_id, buyer__profile=profile)
+        elif profile.role == 'farmer':
+            order = get_object_or_404(Order, id=order_id, produce__farmer__profile=profile)
+        else:
+            return redirect('marketplace:marketplace_home')
+    except UserProfile.DoesNotExist:
+        return redirect('marketplace:marketplace_home')
+
+    # Calculate subtotal
+    subtotal = order.quantity * order.unit_price
+
+    context = {'order': order, 'subtotal': subtotal}
+    return render(request, 'marketplace/order_detail.html', context)

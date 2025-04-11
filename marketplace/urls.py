@@ -49,4 +49,5 @@ urlpatterns = [
     path('marketplace/', views.buyer_marketplace, name='buyer_marketplace'),
     path('notifications/', views.notification_list, name='notification_list'),
     path('produce/<int:produce_id>/delete/', views.delete_produce, name='delete_produce'),
+    path('produce/<int:produce_id>/create-order/', views.create_order, name='create_order'),
 ]

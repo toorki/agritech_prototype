@@ -3,79 +3,207 @@
 {% block title %}Buyer Marketplace{% endblock %}
 
 {% block content %}
-<h1>Buyer Marketplace</h1>
+<style>
+    /* Custom Styling for Buyer Marketplace */
+    body {
+        background-color: #F5F5F5; /* Off-white background */
+    }
 
-<!-- Filters -->
-<div class="mb-3">
-    <form method="get">
+    h1 {
+        color: #F44336; /* Vibrant red for main heading */
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 10px;
+        background-color: #FFFFFF; /* Pure white */
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #4CAF50; /* Nature green for section headings */
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-left: 10px;
+        border-left: 4px solid #A5D6A7; /* Light green border */
+    }
+
+    .mb-3 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .form-label {
+        color: #4CAF50; /* Nature green for labels */
+        font-weight: 500;
+    }
+
+    .form-control {
+        background-color: #FFFFFF; /* Pure white */
+        border: 1px solid #E57373; /* Soft red border */
+        border-radius: 5px;
+        padding: 10px;
+        color: #333;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #F44336; /* Vibrant red on focus */
+        box-shadow: 0 0 5px rgba(244, 67, 54, 0.3);
+    }
+
+    .btn-primary {
+        background-color: #4CAF50; /* Nature green */
+        border-color: #4CAF50;
+        color: #FFFFFF; /* Pure white text */
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #A5D6A7; /* Light green */
+        border-color: #A5D6A7;
+    }
+
+    .card {
+        background-color: #FFFFFF; /* Pure white */
+        border: 1px solid #E57373; /* Soft red border */
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none; /* Remove default link underline */
+        color: inherit; /* Inherit text color */
+        display: block; /* Ensure the entire card is clickable */
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        cursor: pointer; /* Indicate clickable */
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .card-title {
+        color: #F44336; /* Vibrant red for card titles */
+        font-weight: 600;
+    }
+
+    .card-text {
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+    li {
+        background-color: #FFFFFF; /* Pure white */
+        padding: 10px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        border-left: 4px solid #A5D6A7; /* Light green border */
+        color: #333;
+    }
+
+    p {
+        color: #333;
+        padding: 10px;
+        background-color: #F5F5F5; /* Off-white */
+        border-radius: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .col-md-4 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        .btn-primary {
+            width: 100%;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <h1>Buyer Marketplace</h1>
+
+    <!-- Filters -->
+    <div class="mb-3">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="location" class="form-label">Filter by Location:</label>
+                    <input type="text" class="form-control" id="location" name="location" value="{{ location_filter }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="crop" class="form-label">Filter by Crop:</label>
+                    <input type="text" class="form-control" id="crop" name="crop" value="{{ crop_filter }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Featured Produce -->
+    <h2>Featured Produce</h2>
+    {% if featured_produce %}
         <div class="row">
-            <div class="col-md-4">
-                <label for="location" class="form-label">Filter by Location:</label>
-                <input type="text" class="form-control" id="location" name="location" value="{{ location_filter }}">
-            </div>
-            <div class="col-md-4">
-                <label for="crop" class="form-label">Filter by Crop:</label>
-                <input type="text" class="form-control" id="crop" name="crop" value="{{ crop_filter }}">
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary mt-4">Apply Filters</button>
-            </div>
+            {% for produce in featured_produce %}
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'marketplace:produce_detail' produce_id=produce.id %}" class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ produce.title }}</h5>
+                            <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
+                            <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                            <p class="card-text">Quantity: {{ produce.quantity }}</p>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
         </div>
-    </form>
+    {% else %}
+        <p>No featured produce available.</p>
+    {% endif %}
+
+    <!-- Filtered Produce Items -->
+    <h2>Available Produce</h2>
+    {% if produce_items %}
+        <div class="row">
+            {% for produce in produce_items %}
+                <div class="col-md-4 mb-3">
+                    <a href="{% url 'marketplace:produce_detail' produce_id=produce.id %}" class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ produce.title }}</h5>
+                            <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
+                            <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
+                            <p class="card-text">Quantity: {{ produce.quantity }}</p>
+                            <p class="card-text">Location: {{ produce.location }}</p>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No produce matches your filters.</p>
+    {% endif %}
+
+    <!-- Most Rated Farmers -->
+    <h2>Most Rated Farmers</h2>
+    {% if top_farmers %}
+        <ul>
+            {% for farmer in top_farmers %}
+                <li>{{ farmer.profile.user.username }} - Rating: {{ farmer.rating }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No rated farmers available.</p>
+    {% endif %}
 </div>
-
-<!-- Featured Produce -->
-<h2>Featured Produce</h2>
-{% if featured_produce %}
-    <div class="row">
-        {% for produce in featured_produce %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ produce.name }}</h5>
-                        <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
-                        <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
-                        <p class="card-text">Quantity: {{ produce.quantity }}</p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <p>No featured produce available.</p>
-{% endif %}
-
-<!-- Filtered Produce Items -->
-<h2>Available Produce</h2>
-{% if produce_items %}
-    <div class="row">
-        {% for produce in produce_items %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ produce.name }}</h5>
-                        <p class="card-text">Farmer: {{ produce.farmer.profile.user.username }}</p>
-                        <p class="card-text">Price: {{ produce.price_per_unit }} per {{ produce.unit }}</p>
-                        <p class="card-text">Quantity: {{ produce.quantity }}</p>
-                        <p class="card-text">Location: {{ produce.location }}</p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <p>No produce matches your filters.</p>
-{% endif %}
-
-<!-- Most Rated Farmers -->
-<h2>Most Rated Farmers</h2>
-{% if top_farmers %}
-    <ul>
-        {% for farmer in top_farmers %}
-            <li>{{ farmer.profile.user.username }} - Rating: {{ farmer.rating }}</li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No rated farmers available.</p>
-{% endif %}
 {% endblock %}

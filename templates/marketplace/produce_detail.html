@@ -76,13 +76,13 @@
                     <h5 class="mb-0">Place an Order</h5>
                 </div>
                 <div class="card-body">
-                    {% if user.is_authenticated and user.buyer_profile %}
+                    {% if user.is_authenticated and user.userprofile and user.userprofile.role == 'buyer' %}
                         <form method="post" action="{% url 'marketplace:create_order' produce.id %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="quantity" class="form-label">Quantity ({{ produce.unit }})</label>
-                                <input type="number" class="form-control" id="quantity" name="quantity" min="0.01" max="{{ produce.quantity }}" step="0.01" required>
-                                <div class="form-text">Maximum available: {{ produce.quantity }} {{ produce.unit }}</div>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="{{ min_quantity }}" max="{{ produce.quantity }}" step="0.01" value="{{ min_quantity }}" required>
+                                <div class="form-text">Minimum: {{ min_quantity }} {{ produce.unit }}, Maximum available: {{ produce.quantity }} {{ produce.unit }}</div>
                             </div>
                             
                             <div class="mb-3">
@@ -122,13 +122,13 @@
                                 </button>
                             </div>
                         </form>
-                    {% elif user.is_authenticated and user.farmer_profile %}
+                    {% elif user.is_authenticated and user.userprofile and user.userprofile.role == 'farmer' %}
                         <div class="alert alert-info">
                             <p>You are logged in as a farmer. To place orders, please register a buyer account.</p>
                         </div>
                     {% else %}
                         <div class="alert alert-warning">
-                            <p>Please <a href="{% url 'marketplace:login_farmer' %}">log in</a> or <a href="{% url 'marketplace:register_buyer' %}">register</a> as a buyer to place an order.</p>
+                            <p>Please <a href="{% url 'marketplace:login_buyer' %}">log in</a> or <a href="{% url 'marketplace:register_buyer' %}">register</a> as a buyer to place an order.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -185,16 +185,27 @@
         const quantityInput = document.getElementById('quantity');
         const totalPriceElement = document.getElementById('total-price');
         const pricePerUnit = {{ produce.price_per_unit }};
-        
+        const minQuantity = {{ min_quantity }}; // Get the minimum quantity from context
+
         if (quantityInput && totalPriceElement) {
+            // Set initial value to min_quantity
+            quantityInput.value = minQuantity;
+
             quantityInput.addEventListener('input', function() {
-                const quantity = parseFloat(this.value) || 0;
+                let quantity = parseFloat(this.value) || minQuantity; // Default to min_quantity if invalid
+                if (quantity < minQuantity) {
+                    quantity = minQuantity; // Enforce minimum client-side
+                    this.value = minQuantity;
+                }
                 const subtotal = quantity * pricePerUnit;
                 const fee = subtotal * 0.02; // 2% platform fee
                 const total = subtotal + fee;
                 
                 totalPriceElement.textContent = total.toFixed(2) + ' TND';
             });
+
+            // Trigger initial calculation
+            quantityInput.dispatchEvent(new Event('input'));
         }
     });
 </script>
