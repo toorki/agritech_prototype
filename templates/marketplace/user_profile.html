@@ -11,7 +11,7 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
-        background-color: #fff;
+        background-color: #F5F5F5; /* Off-white background */
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
@@ -22,7 +22,7 @@
     }
 
     .profile-header h1 {
-        color: #4CAF50; /* Green for farmer/buyer */
+        color: #4CAF50; /* Nature green for default heading */
         font-size: 2.5rem;
         margin-bottom: 10px;
     }
@@ -30,9 +30,9 @@
     .profile-section {
         margin-bottom: 30px;
         padding: 20px;
-        background-color: #f9f9f9;
+        background-color: #FFFFFF; /* Pure white */
         border-radius: 8px;
-        border-left: 5px solid #4CAF50; /* Green for farmer/buyer */
+        border-left: 5px solid #4CAF50; /* Nature green border */
     }
 
     .profile-section h2 {
@@ -48,16 +48,16 @@
     }
 
     .profile-section strong {
-        color: #2E7D32; /* Dark green for farmer/buyer */
+        color: #2E7D32; /* Dark green for default */
         margin-right: 10px;
     }
 
     .produce-item, .order-item {
-        background-color: #fff;
+        background-color: #FFFFFF; /* Pure white */
         padding: 15px;
         margin-bottom: 10px;
         border-radius: 5px;
-        border: 1px solid #ddd;
+        border: 1px solid #E57373; /* Soft red border */
         transition: transform 0.2s, box-shadow 0.2s;
     }
 
@@ -86,6 +86,70 @@
         }
     }
 </style>
+
+<!-- Buyer-specific styles (applied conditionally) -->
+{% if profile_type == 'buyer' %}
+<style>
+    .profile-container {
+        background-color: #F5F5F5; /* Off-white background */
+    }
+
+    .profile-header h1 {
+        color: #F44336; /* Vibrant red for buyer heading */
+    }
+
+    .profile-section {
+        background-color: #FFFFFF; /* Pure white */
+        border-left: 5px solid #E57373; /* Soft red border */
+    }
+
+    .profile-section h2 {
+        color: #4CAF50; /* Nature green for section headings */
+    }
+
+    .profile-section p {
+        color: #333;
+    }
+
+    .profile-section strong {
+        color: #4CAF50; /* Nature green for strong text */
+    }
+
+    .order-item {
+        border-color: #E57373; /* Soft red border */
+    }
+
+    .order-item:hover {
+        border-color: #F44336; /* Vibrant red on hover */
+    }
+
+    .no-items {
+        color: #E57373; /* Soft red for no items message */
+    }
+
+    .profile-container .btn-primary {
+        background-color: #4CAF50; /* Nature green */
+        border-color: #4CAF50;
+        color: #FFFFFF; /* Pure white text */
+    }
+
+    .profile-container .btn-primary:hover {
+        background-color: #A5D6A7; /* Light green */
+        border-color: #A5D6A7;
+    }
+
+    .profile-container .btn-secondary {
+        background-color: #E57373; /* Soft red */
+        border-color: #E57373;
+        color: #FFFFFF; /* Pure white text */
+    }
+
+    .profile-container .btn-secondary:hover {
+        background-color: #F44336; /* Vibrant red */
+        border-color: #F44336;
+    }
+</style>
+{% endif %}
 
 <!-- Sponsor-specific styles (applied conditionally) -->
 {% if profile_type == 'sponsor' %}
@@ -231,8 +295,8 @@
     </div>
 
     <div class="text-center">
-        <!-- Conditional "Back to Home" link -->
-        <a href="{% if profile_type == 'sponsor' %}{% url 'marketplace:sponsorship' %}{% else %}{% url 'marketplace:marketplace_home' %}{% endif %}" class="btn btn-primary">Back to Home</a>
+        <!-- Conditional "Back to Home" link updated for buyer -->
+        <a href="{% if profile_type == 'buyer' %}{% url 'marketplace:buyer_marketplace' %}{% elif profile_type == 'sponsor' %}{% url 'marketplace:sponsorship' %}{% else %}{% url 'marketplace:marketplace_home' %}{% endif %}" class="btn btn-primary">Back to Home</a>
         <a href="{% url 'marketplace:user_profile_update' %}" class="btn btn-secondary">Edit Profile</a>
     </div>
 </div>
