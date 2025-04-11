@@ -169,14 +169,7 @@ def produce_list(request):
     }
     return render(request, 'marketplace/produce_list.html', context)
 
-def produce_detail(request, produce_id):
-    produce = get_object_or_404(Produce, id=produce_id)
-    related_items = Produce.objects.filter(category=produce.category, is_available=True).exclude(id=produce_id)[:4]
-    context = {
-        'produce': produce,
-        'related_items': related_items,
-    }
-    return render(request, 'marketplace/produce_detail.html', context)
+
 
 def logout_view(request):
     logout(request)
@@ -815,27 +808,24 @@ def notification_list(request):
     
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
     for notification in notifications:
-        notification.is_read = True
-        notification.save()
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save()
     
-    # Extract sponsorship IDs from notifications
-    sponsorship_ids = []
-    for notif in notifications:
-        match = re.search(r"'(\d+)'", notif.message)
+    # Extract order IDs from notifications (for order-related notifications)
+    order_notifications = []
+    for notification in notifications:
+        match = re.search(r'\[Order ID: (\d+)\]', notification.message)
         if match:
-            sponsorship_ids.append(int(match.group(1)))
+            order_id = int(match.group(1))
+            order_notifications.append({'notification': notification, 'order_id': order_id})
     
-    # Fetch related sponsorships with sponsor and farmer details
-    sponsorships = (Sponsorship.objects.filter(id__in=sponsorship_ids)
-                   .select_related('sponsor', 'farmer')
-                   .order_by('id') if sponsorship_ids else [])
-
-    # Create a mapping of notification IDs to sponsorships
-    notification_sponsorship_map = {s.id: s for s in sponsorships}
-
+    # Debug: Log the order_notifications to verify population
+    logger.debug(f"Order notifications: {order_notifications}")
+    
     context = {
         'notifications': notifications,
-        'notification_sponsorship_map': notification_sponsorship_map,
+        'order_notifications': order_notifications,
     }
     return render(request, 'marketplace/notification_list.html', context)
 
@@ -904,27 +894,28 @@ def create_order(request, produce_id):
         produce.quantity -= quantity
         produce.save()
 
-        # Notify the farmer
+        # Notify the farmer with order ID in the message
         farmer_user = produce.farmer.profile.user
+        notification_message = f"New order placed for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit} [Order ID: {order.id}]"
         Notification.objects.create(
             user=farmer_user,
-            message=f"New order placed for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit}."
+            message=notification_message
         )
 
         # Email notification
         subject = f"New Order for {produce.title}"
-        message = f"Dear {farmer_user.get_full_name()},\n\nA new order has been placed for your produce '{produce.title}' by {buyer.profile.user.get_full_name()}.\n\nDetails:\n- Quantity: {quantity} {produce.unit}\n- Delivery Location: {delivery_location}\n- Total Amount: {total_amount} TND\n\nPlease log in to manage this order.\n\nBest,\nAgriTech Team"
+        message = f"Dear {farmer_user.get_full_name()},\n\nA new order has been placed for your produce '{produce.title}' by {buyer.profile.user.get_full_name()}.\n\nDetails:\n- Quantity: {quantity} {produce.unit}\n- Delivery Location: {delivery_location}\n- Total Amount: {total_amount} TND\n- Order ID: {order.id}\n\nPlease log in to manage this order.\n\nBest,\nAgriTech Team"
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [farmer_user.email]
         try:
-            send_mail(subject, message, from_email, recipient_list, fail_silently=True)  # Changed to fail_silently=True
+            send_mail(subject, message, from_email, recipient_list, fail_silently=True)
             logger.debug(f"Email sent to {farmer_user.email}")
         except Exception as e:
             logger.error(f"Failed to send email to {farmer_user.email}: {str(e)}")
             messages.warning(request, "Order placed, but email notification to farmer failed. Please contact support.")
 
         # SMS notification
-        sms_message = f"New order for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit}. Log in to manage. AgriTech"
+        sms_message = f"New order for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit} [Order ID: {order.id}]. Log in to manage. AgriTech"
         try:
             send_sms(produce.farmer.phone_number, sms_message)
             logger.debug(f"SMS sent to {produce.farmer.phone_number}")
@@ -936,23 +927,3 @@ def create_order(request, produce_id):
         return redirect('marketplace:order_detail', order_id=order.id)
 
     return redirect('marketplace:produce_detail', produce_id=produce.id)
-
-@login_required
-def order_detail(request, order_id):
-    user = request.user
-    try:
-        profile = UserProfile.objects.get(user=user)
-        if profile.role == 'buyer':
-            order = get_object_or_404(Order, id=order_id, buyer__profile=profile)
-        elif profile.role == 'farmer':
-            order = get_object_or_404(Order, id=order_id, produce__farmer__profile=profile)
-        else:
-            return redirect('marketplace:marketplace_home')
-    except UserProfile.DoesNotExist:
-        return redirect('marketplace:marketplace_home')
-
-    # Calculate subtotal
-    subtotal = order.quantity * order.unit_price
-
-    context = {'order': order, 'subtotal': subtotal}
-    return render(request, 'marketplace/order_detail.html', context)

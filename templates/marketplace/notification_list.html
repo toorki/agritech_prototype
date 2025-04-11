@@ -62,17 +62,6 @@
             color: #8B4513; /* Rich brown text */
             margin-bottom: 10px;
         }
-        .view-details-btn {
-            background-color: #4CAF50; /* Vibrant green from farmer dashboard */
-            border-color: #4CAF50;
-            font-weight: 500;
-            padding: 8px 16px;
-            transition: background-color 0.3s ease;
-        }
-        .view-details-btn:hover {
-            background-color: #8BC34A; /* Soft green from farmer dashboard */
-            border-color: #689F38;
-        }
         .back-btn {
             background-color: #FFCA28; /* Warm yellow from farmer dashboard */
             border-color: #FFCA28;
@@ -115,12 +104,24 @@
         {% if notifications %}
             <div class="list-group">
                 {% for notification in notifications %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ notification.message }}</h5>
-                            <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                    {% for order_notif in order_notifications %}
+                        {% if order_notif.notification.id == notification.id %}  <!-- Compare by ID -->
+                            <a href="{% url 'marketplace:order_detail' order_notif.order_id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ notification.message }}</h5>
+                                    <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                                </div>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not order_notifications|length or not order_notifications %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ notification.message }}</h5>
+                                <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% else %}
