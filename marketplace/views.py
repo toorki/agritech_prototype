@@ -904,10 +904,34 @@ def create_order(request, produce_id):
         produce.quantity -= quantity
         produce.save()
 
+        # Notify the farmer
+        farmer_user = produce.farmer.profile.user
         Notification.objects.create(
-            user=produce.farmer.profile.user,
-            message=f"New order placed for {produce.title} by {buyer.profile.user.get_full_name()}."
+            user=farmer_user,
+            message=f"New order placed for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit}."
         )
+
+        # Email notification
+        subject = f"New Order for {produce.title}"
+        message = f"Dear {farmer_user.get_full_name()},\n\nA new order has been placed for your produce '{produce.title}' by {buyer.profile.user.get_full_name()}.\n\nDetails:\n- Quantity: {quantity} {produce.unit}\n- Delivery Location: {delivery_location}\n- Total Amount: {total_amount} TND\n\nPlease log in to manage this order.\n\nBest,\nAgriTech Team"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [farmer_user.email]
+        try:
+            send_mail(subject, message, from_email, recipient_list, fail_silently=True)  # Changed to fail_silently=True
+            logger.debug(f"Email sent to {farmer_user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send email to {farmer_user.email}: {str(e)}")
+            messages.warning(request, "Order placed, but email notification to farmer failed. Please contact support.")
+
+        # SMS notification
+        sms_message = f"New order for {produce.title} by {buyer.profile.user.get_full_name()} for {quantity} {produce.unit}. Log in to manage. AgriTech"
+        try:
+            send_sms(produce.farmer.phone_number, sms_message)
+            logger.debug(f"SMS sent to {produce.farmer.phone_number}")
+        except Exception as e:
+            logger.error(f"Failed to send SMS to {produce.farmer.phone_number}: {str(e)}")
+            messages.warning(request, "Order placed, but SMS notification to farmer failed. Please contact support.")
+
         messages.success(request, "Order placed successfully! You will be notified of the status.")
         return redirect('marketplace:order_detail', order_id=order.id)
 
