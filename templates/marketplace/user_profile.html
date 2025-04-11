@@ -231,7 +231,8 @@
     </div>
 
     <div class="text-center">
-        <a href="{% url 'marketplace:marketplace_home' %}" class="btn btn-primary">Back to Home</a>
+        <!-- Conditional "Back to Home" link -->
+        <a href="{% if profile_type == 'sponsor' %}{% url 'marketplace:sponsorship' %}{% else %}{% url 'marketplace:marketplace_home' %}{% endif %}" class="btn btn-primary">Back to Home</a>
         <a href="{% url 'marketplace:user_profile_update' %}" class="btn btn-secondary">Edit Profile</a>
     </div>
 </div>
