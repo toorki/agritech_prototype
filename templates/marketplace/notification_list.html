@@ -82,6 +82,11 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+        .notification-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
         @media (max-width: 768px) {
             .notification-container {
                 padding: 15px;
@@ -104,17 +109,21 @@
         {% if notifications %}
             <div class="list-group">
                 {% for notification in notifications %}
-                    {% for order_notif in order_notifications %}
-                        {% if order_notif.notification.id == notification.id %}  <!-- Compare by ID -->
-                            <a href="{% url 'marketplace:order_detail' order_notif.order_id %}" class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">{{ notification.message }}</h5>
-                                    <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
-                                </div>
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                    {% if not order_notifications|length or not order_notifications %}
+                    {% if notification.order_id %}
+                        <a href="{% url 'marketplace:order_detail' notification.order_id %}" class="list-group-item list-group-item-action notification-link">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ notification.message }}</h5>
+                                <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                            </div>
+                        </a>
+                    {% elif notification.sponsorship_id %}
+                        <a href="{% url 'marketplace:sponsorship_detail' notification.sponsorship_id %}" class="list-group-item list-group-item-action notification-link">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ notification.message }}</h5>
+                                <small>{{ notification.created_at|date:"F j, Y H:i" }}</small>
+                            </div>
+                        </a>
+                    {% else %}
                         <div class="list-group-item">
                             <div class="d-flex w-100 justify-content-between">
                                 <h5 class="mb-1">{{ notification.message }}</h5>

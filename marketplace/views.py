@@ -681,7 +681,7 @@ def delete_produce(request, produce_id):
         return redirect('marketplace:farmer_dashboard')
 
     context = {'produce': produce}
-    return render(request, 'marketplace/confirm_delete_produce.html', context)
+    return render(request, "marketplace/confirm_delete_produce.html", context)
 
 # Registration Views
 def register_farmer(request):
@@ -808,19 +808,35 @@ def notification_list(request):
     # Mark all notifications as read
     notifications.filter(is_read=False).update(is_read=True)
     
-    # Prepare notifications with order IDs
+    # Prepare notifications with order IDs and sponsorship IDs
     processed_notifications = []
     for notification in notifications:
         order_id = None
+        sponsorship_id = None
+        # Check for order notifications
         if "New order placed" in notification.message:
+            logger.debug(f"Processing order notification: {notification.message}")
             match = re.search(r'\[Order ID: (\d+)\]', notification.message)
             if match:
                 order_id = match.group(1)
+                logger.debug(f"Extracted order_id: {order_id}")
+            else:
+                logger.warning(f"Failed to extract order_id from message: {notification.message}")
+        # Check for sponsorship notifications
+        elif "New sponsorship proposal" in notification.message:
+            logger.debug(f"Processing sponsorship notification: {notification.message}")
+            match = re.search(r"New sponsorship proposal '(\d+)'", notification.message)
+            if match:
+                sponsorship_id = match.group(1)
+                logger.debug(f"Extracted sponsorship_id: {sponsorship_id}")
+            else:
+                logger.warning(f"Failed to extract sponsorship_id from message: {notification.message}")
         processed_notifications.append({
             'id': notification.id,
             'message': notification.message,
             'created_at': notification.created_at,
             'order_id': order_id,
+            'sponsorship_id': sponsorship_id,
         })
     
     # Debug: Log the processed notifications to verify
@@ -845,7 +861,7 @@ def create_order(request, produce_id):
         buyer = Buyer.objects.get(profile=user_profile)
     except Buyer.DoesNotExist:
         logger.error(f"No buyer profile found for user {request.user.username}")
-        messages.error(request, "No buyer profile found. Please ensure your account is set up as a buyer.")
+        messages.error(request, "No buyer profile found. Please matters.")
         return redirect('marketplace:produce_detail', produce_id=produce.id)
 
     if request.method == 'POST':
