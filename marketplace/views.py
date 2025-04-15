@@ -169,8 +169,6 @@ def produce_list(request):
     }
     return render(request, 'marketplace/produce_list.html', context)
 
-
-
 def logout_view(request):
     logout(request)
     return redirect('marketplace:marketplace_home')
@@ -807,25 +805,29 @@ def notification_list(request):
         return redirect('marketplace:marketplace_home')
     
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-    for notification in notifications:
-        if not notification.is_read:
-            notification.is_read = True
-            notification.save()
+    # Mark all notifications as read
+    notifications.filter(is_read=False).update(is_read=True)
     
-    # Extract order IDs from notifications (for order-related notifications)
-    order_notifications = []
+    # Prepare notifications with order IDs
+    processed_notifications = []
     for notification in notifications:
-        match = re.search(r'\[Order ID: (\d+)\]', notification.message)
-        if match:
-            order_id = int(match.group(1))
-            order_notifications.append({'notification': notification, 'order_id': order_id})
+        order_id = None
+        if "New order placed" in notification.message:
+            match = re.search(r'\[Order ID: (\d+)\]', notification.message)
+            if match:
+                order_id = match.group(1)
+        processed_notifications.append({
+            'id': notification.id,
+            'message': notification.message,
+            'created_at': notification.created_at,
+            'order_id': order_id,
+        })
     
-    # Debug: Log the order_notifications to verify population
-    logger.debug(f"Order notifications: {order_notifications}")
+    # Debug: Log the processed notifications to verify
+    logger.debug(f"Processed notifications: {processed_notifications}")
     
     context = {
-        'notifications': notifications,
-        'order_notifications': order_notifications,
+        'notifications': processed_notifications,
     }
     return render(request, 'marketplace/notification_list.html', context)
 
